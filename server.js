@@ -8,18 +8,47 @@ const {
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
-// ── Middleware ─────────────────────────────────────────────────────────────
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── Document helpers ───────────────────────────────────────────────────────
-const bold   = (t, sz = 22) => new TextRun({ text: String(t), bold: true, size: sz });
-const normal = (t, sz = 22) => new TextRun({ text: String(t), size: sz });
+// ── Helpers ────────────────────────────────────────────────────────────────
+const bold   = (t, sz = 22) => new TextRun({ text: String(t || ''), bold: true,  size: sz });
+const normal = (t, sz = 22) => new TextRun({ text: String(t || ''), bold: false, size: sz });
 const empty  = ()            => new Paragraph({ children: [] });
 const LINE   = '─'.repeat(95);
 
-// ── Affidavit builder ──────────────────────────────────────────────────────
+// Business type → designation map (mirrors frontend logic)
+const DESIGNATION_MAP = {
+  'Private Limited' : 'DIRECTOR',
+  'Public Limited'  : 'DIRECTOR',
+  'HUF'             : 'KARTA',
+  'Trust'           : 'TRUSTEE',
+  'Proprietorship'  : 'PROPRIETOR',
+  'Partnership'     : 'PARTNER',
+  'LLP'             : 'DESIGNATED PARTNER'
+};
+
+// ── Affidavit ──────────────────────────────────────────────────────────────
 function buildAffidavit(d) {
+  const designation = DESIGNATION_MAP[d.businessType] || d.businessType.toUpperCase();
+
+  // Opening line varies by entity type
+  let openingRuns;
+  if (d.businessType === 'Proprietorship') {
+    openingRuns = [
+      normal('I '), bold(d.applicantName),
+      normal(', Proprietor of "'), bold(d.businessName),
+      normal('" having registered office at '), bold(d.registeredAddress)
+    ];
+  } else {
+    openingRuns = [
+      normal('I '), bold(d.applicantName),
+      normal(', '), bold(designation),
+      normal(' of "'), bold(d.businessName),
+      normal('" having registered office at '), bold(d.registeredAddress)
+    ];
+  }
+
   return new Document({
     sections: [{
       properties: {
@@ -35,15 +64,9 @@ function buildAffidavit(d) {
         }),
         new Paragraph({ children: [normal(LINE, 18)] }),
         empty(),
-        new Paragraph({
-          children: [
-            normal('I '), bold(d.applicantName),
-            normal(' proprietor of "'), bold(d.brandName),
-            normal('" having registered office AT- '), bold(d.registeredAddress)
-          ]
-        }),
+        new Paragraph({ children: openingRuns }),
         empty(),
-        new Paragraph({ children: [normal('Do hereby solely affirm as follow:')] }),
+        new Paragraph({ children: [normal('Do hereby solely affirm as follows:')] }),
         empty(),
         new Paragraph({
           children: [
@@ -63,9 +86,12 @@ function buildAffidavit(d) {
         new Paragraph({
           children: [
             normal('A trademark application is hereby made for registration of the accompanying trademark '),
-            bold('"' + d.brandName + '"'), normal(' in '),
+            bold('"' + d.brandName + '"'),
+            normal(' in '),
             bold('CLASS ' + d.businessClass),
-            normal(' and the said mark has been proposed to be used for the said ' + d.businessType + '.')
+            normal(' and the said mark has been proposed to be used for the said '),
+            bold(d.businessType.toUpperCase()),
+            normal('.')
           ]
         }),
         empty(),
@@ -86,8 +112,10 @@ function buildAffidavit(d) {
   });
 }
 
-// ── Power of Attorney builder ──────────────────────────────────────────────
+// ── Power of Attorney ──────────────────────────────────────────────────────
 function buildPOA(d) {
+  const designation = DESIGNATION_MAP[d.businessType] || d.businessType.toUpperCase();
+
   const items = [
     'Applying for registration of the following trademark(s) under the Trade Marks Act, 1999 and Rules made thereunder;',
     'Preparing, signing and submitting all applications, requests, forms, responses, and other documents;',
@@ -96,6 +124,29 @@ function buildPOA(d) {
     'Making necessary amendments or modifications to the application;',
     'Taking all necessary steps, including appearing at hearings, filing affidavits or appeals, and performing other acts, deeds and things which are necessary or incidental to the registration and protection of the said mark(s).'
   ];
+
+  // Opening paragraph varies by entity type
+  let openingRuns;
+  if (d.businessType === 'Proprietorship') {
+    openingRuns = [
+      normal('I '), bold(d.applicantName),
+      normal(', Proprietor of "'), bold(d.businessName),
+      normal('" having registered office at '), bold(d.registeredAddress),
+      normal(', do hereby appoint: '), bold(d.agentName),
+      normal(', having office at '), bold(d.agentAddress),
+      normal(', and having '), bold('Trade Marks Agent Code ' + d.agentCode), normal('.')
+    ];
+  } else {
+    openingRuns = [
+      normal('I/We '), bold(d.applicantName),
+      normal(', '), bold(designation),
+      normal(' of "'), bold(d.businessName),
+      normal('" having registered office at '), bold(d.registeredAddress),
+      normal(', do hereby appoint: '), bold(d.agentName),
+      normal(', having office at '), bold(d.agentAddress),
+      normal(', and having '), bold('Trade Marks Agent Code ' + d.agentCode), normal('.')
+    ];
+  }
 
   return new Document({
     sections: [{
@@ -116,16 +167,7 @@ function buildPOA(d) {
         }),
         new Paragraph({ children: [normal(LINE, 18)] }),
         empty(),
-        new Paragraph({
-          children: [
-            normal('I '), bold(d.applicantName),
-            normal(' proprietor of "'), bold(d.brandName),
-            normal('" having registered office AT - '), bold(d.registeredAddress),
-            normal(', do hereby appoint: '), bold(d.agentName),
-            normal(', Having office at '), bold(d.agentAddress),
-            normal(', and having '), bold('Trade Marks Agent Code ' + d.agentCode), normal('.')
-          ]
-        }),
+        new Paragraph({ children: openingRuns }),
         empty(),
         new Paragraph({ children: [bold('As my/our lawful Attorney to act on my/our behalf in respect of:')] }),
         empty(),
@@ -152,13 +194,13 @@ function buildPOA(d) {
         }),
         new Paragraph({
           children: [
-            bold('Designation: SOLE PROPRIETOR'),
+            bold('Designation: ' + designation),
             normal('                                               Agent Code: '),
             bold(d.agentCode)
           ]
         }),
         empty(),
-        new Paragraph({ children: [normal('For: '), bold(d.brandName)] }),
+        new Paragraph({ children: [normal('For: '), bold(d.businessName)] }),
         empty(),
         new Paragraph({ children: [bold('To,')] }),
         new Paragraph({ children: [bold('The Registrar of Trade Marks,')] }),
@@ -171,24 +213,25 @@ function buildPOA(d) {
   });
 }
 
-// ── API routes ─────────────────────────────────────────────────────────────
+// ── Routes ─────────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', app: 'tmOsphere', version: '1.0.0' });
+  res.json({ status: 'ok', app: 'tmOsphere', version: '2.0.0' });
 });
 
 app.post('/api/generate', async (req, res) => {
   try {
     const d = req.body;
 
-    // Basic validation
     const required = [
-      'applicantName','brandName','registeredAddress','residentialAddress',
-      'businessClass','businessType','affidavitDate','place',
-      'agentName','agentCode','agentAddress','poaDate','poaExecutionDate','tmOffice'
+      'applicantName', 'businessName', 'brandName',
+      'registeredAddress', 'residentialAddress',
+      'businessClass', 'businessType', 'affidavitDate', 'place',
+      'agentName', 'agentCode', 'agentAddress',
+      'poaDate', 'poaExecutionDate', 'tmOffice'
     ];
     const missing = required.filter(f => !d[f] || !String(d[f]).trim());
     if (missing.length) {
-      return res.status(400).json({ error: 'Missing fields: ' + missing.join(', ') });
+      return res.status(400).json({ error: 'Missing required fields: ' + missing.join(', ') });
     }
 
     const [affBuf, poaBuf] = await Promise.all([
@@ -214,12 +257,10 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
-// ── Catch-all → serve frontend ─────────────────────────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`✅  tmOsphere running → http://localhost:${PORT}`);
+  console.log('✅  tmOsphere v2 running → http://localhost:' + PORT);
 });
