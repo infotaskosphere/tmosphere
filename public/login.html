@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tmOsphere — Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0e0e0f;
+      --ink-soft: #1a1a1c;
+      --cream: #f7f4ef;
+      --gold: #c9a84c;
+      --gold-light: #e8d08a;
+      --gold-dim: rgba(201,168,76,0.12);
+      --rust: #b84c2a;
+      --border: #d4cfc7;
+      --border-dark: rgba(201,168,76,0.25);
+      --text: #2c2c2e;
+      --muted: #7c7068;
+      --muted-light: #a09880;
+      --green: #2e7d4f;
+      --error-bg: #fde8e8;
+      --error-border: #e88a8a;
+      --error-text: #7a1515;
+    }
+
+    html { height: 100%; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ── Background texture ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        repeating-linear-gradient(
+          -45deg,
+          transparent, transparent 60px,
+          rgba(201,168,76,0.03) 60px, rgba(201,168,76,0.03) 61px
+        ),
+        repeating-linear-gradient(
+          45deg,
+          transparent, transparent 60px,
+          rgba(201,168,76,0.02) 60px, rgba(201,168,76,0.02) 61px
+        );
+    }
+
+    /* ── Glow orbs ── */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -120px; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 400px;
+      background: radial-gradient(ellipse, rgba(201,168,76,0.08) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      position: relative; z-index: 10;
+      padding: 0 2.5rem;
+      height: 68px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border-dark);
+      background: rgba(14,14,15,0.8);
+      backdrop-filter: blur(12px);
+    }
+    .logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+    .logo-mark {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif; font-weight: 700; font-size: 18px; color: var(--ink);
+      box-shadow: 0 2px 12px rgba(201,168,76,0.3);
+    }
+    .logo-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem; font-weight: 600; color: #fff;
+    }
+    .logo-name span { color: var(--gold); }
+    .header-tag {
+      font-size: 0.72rem; color: var(--muted-light);
+      letter-spacing: 0.14em; text-transform: uppercase;
+    }
+
+    /* ── Main layout ── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+      position: relative; z-index: 1;
+    }
+
+    /* ── Login card ── */
+    .login-wrapper {
+      width: 100%;
+      max-width: 440px;
+      animation: riseIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-eyebrow {
+      text-align: center;
+      font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 0.6rem;
+    }
+
+    .login-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem; font-weight: 700;
+      color: #fff; text-align: center;
+      line-height: 1.2; margin-bottom: 0.5rem;
+    }
+
+    .login-subtitle {
+      text-align: center;
+      font-size: 0.88rem; color: var(--muted-light);
+      margin-bottom: 2rem; line-height: 1.6;
+    }
+
+    .login-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-dark);
+      border-radius: 16px;
+      padding: 2.2rem 2rem;
+      backdrop-filter: blur(16px);
+      box-shadow:
+        0 4px 32px rgba(0,0,0,0.4),
+        0 1px 0 rgba(201,168,76,0.1) inset;
+    }
+
+    /* ── Form fields ── */
+    .field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.1rem; }
+    .field:last-of-type { margin-bottom: 0; }
+
+    label {
+      font-size: 0.74rem; font-weight: 600;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      color: var(--muted-light);
+    }
+
+    .input-wrap { position: relative; }
+    .input-icon {
+      position: absolute; left: 0.9rem; top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem; pointer-events: none;
+      opacity: 0.5;
+    }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.93rem; color: #fff;
+      background: rgba(255,255,255,0.06);
+      border: 1.5px solid rgba(201,168,76,0.2);
+      border-radius: 8px;
+      padding: 0.72rem 0.9rem 0.72rem 2.5rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+    }
+    input::placeholder { color: rgba(160,152,128,0.5); }
+    input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+      background: rgba(255,255,255,0.09);
+    }
+    input.error {
+      border-color: var(--error-border);
+      box-shadow: 0 0 0 3px rgba(232,138,138,0.12);
+    }
+
+    /* Password toggle */
+    .pw-toggle {
+      position: absolute; right: 0.85rem; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--muted-light); font-size: 1rem;
+      padding: 0.2rem; line-height: 1;
+      transition: color 0.15s;
+    }
+    .pw-toggle:hover { color: var(--gold); }
+
+    /* Remember me + forgot */
+    .form-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 1.2rem 0 1.6rem;
+    }
+    .remember {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.82rem; color: var(--muted-light); cursor: pointer;
+    }
+    .remember input[type="checkbox"] {
+      width: 15px; height: 15px; min-width: 15px;
+      accent-color: var(--gold);
+      cursor: pointer; padding: 0; background: none; border: none;
+    }
+    .forgot {
+      font-size: 0.82rem; color: var(--gold);
+      text-decoration: none; transition: opacity 0.15s;
+    }
+    .forgot:hover { opacity: 0.75; text-decoration: underline; }
+
+    /* Submit button */
+    .btn-login {
+      width: 100%;
+      padding: 0.88rem 1rem;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem; font-weight: 700;
+      letter-spacing: 0.05em;
+      border: none; border-radius: 8px;
+      cursor: pointer;
+      position: relative; overflow: hidden;
+      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(201,168,76,0.25);
+    }
+    .btn-login::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.5s;
+    }
+    .btn-login:hover::before { transform: translateX(100%); }
+    .btn-login:hover { box-shadow: 0 6px 28px rgba(201,168,76,0.4); }
+    .btn-login:active { transform: scale(0.99); }
+    .btn-login:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* Loading state */
+    .btn-login .btn-text { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+    .btn-spinner {
+      width: 15px; height: 15px;
+      border: 2px solid rgba(14,14,15,0.3);
+      border-top-color: var(--ink);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error alert */
+    .alert {
+      display: none;
+      align-items: flex-start; gap: 0.6rem;
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
+      margin-bottom: 1.2rem;
+      font-size: 0.85rem; color: var(--error-text);
+      animation: shakeIn 0.35s ease;
+    }
+    .alert.show { display: flex; }
+    @keyframes shakeIn {
+      0%  { transform: translateX(-6px); }
+      25% { transform: translateX(6px); }
+      50% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
+      100%{ transform: translateX(0); }
+    }
+
+    /* Divider */
+    .divider {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin: 1.6rem 0 1.4rem;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: var(--border-dark);
+    }
+    .divider span {
+      font-size: 0.72rem; color: var(--muted-light);
+      letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
+    }
+
+    /* Bottom note */
+    .login-note {
+      text-align: center;
+      font-size: 0.79rem; color: var(--muted-light);
+      margin-top: 1.6rem; line-height: 1.6;
+    }
+    .login-note strong { color: rgba(255,255,255,0.6); font-weight: 500; }
+
+    /* Security badge */
+    .security-badges {
+      display: flex; align-items: center; justify-content: center; gap: 1.2rem;
+      margin-top: 2rem; padding-top: 1.6rem;
+      border-top: 1px solid rgba(201,168,76,0.1);
+    }
+    .badge {
+      display: flex; align-items: center; gap: 0.35rem;
+      font-size: 0.7rem; color: var(--muted-light);
+      letter-spacing: 0.04em;
+    }
+    .badge-icon { font-size: 0.85rem; }
+
+    /* Footer */
+    footer {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 1.4rem;
+      font-size: 0.74rem; color: rgba(160,152,128,0.5);
+      border-top: 1px solid rgba(201,168,76,0.08);
+    }
+    footer a { color: var(--gold); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* Watermark stamp */
+    .stamp {
+      position: fixed; bottom: 4rem; right: -2.5rem;
+      font-family: 'Playfair Display', serif;
+      font-size: 6rem; font-weight: 700; font-style: italic;
+      color: rgba(201,168,76,0.04);
+      transform: rotate(-15deg);
+      pointer-events: none; user-select: none;
+      letter-spacing: -0.02em;
+      z-index: 0;
+    }
+
+    @media (max-width: 480px) {
+      header { padding: 0 1.2rem; }
+      .header-tag { display: none; }
+      .login-card { padding: 1.8rem 1.4rem; }
+      .login-title { font-size: 1.7rem; }
+      .stamp { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Background watermark -->
+<div class="stamp">™</div>
+
+<!-- Header -->
+<header>
+  <a href="/login.html" class="logo">
+    <div class="logo-mark">™</div>
+    <span class="logo-name">tm<span>O</span>sphere</span>
+  </a>
+  <span class="header-tag">Trademark Document Generator</span>
+</header>
+
+<!-- Main -->
+<main>
+  <div class="login-wrapper">
+
+    <div class="login-eyebrow">India · Trade Marks Act, 1999</div>
+    <h1 class="login-title">Welcome Back</h1>
+    <p class="login-subtitle">Sign in to generate trademark documents instantly</p>
+
+    <div class="login-card">
+
+      <!-- Error alert -->
+      <div class="alert" id="alertBox">
+        <span>⚠️</span>
+        <span id="alertMsg">Invalid email or password. Please try again.</span>
+      </div>
+
+      <!-- Form -->
+      <div class="field">
+        <label for="email">Email Address</label>
+        <div class="input-wrap">
+          <span class="input-icon">✉️</span>
+          <input type="email" id="email" name="email"
+            placeholder="you@example.com" autocomplete="email" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="password" name="password"
+            placeholder="Enter your password" autocomplete="current-password" required />
+          <button type="button" class="pw-toggle" id="pwToggle" title="Show / hide password">
+            👁
+          </button>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <label class="remember">
+          <input type="checkbox" id="rememberMe" />
+          Remember me
+        </label>
+        <a href="#" class="forgot" id="forgotLink">Forgot password?</a>
+      </div>
+
+      <!-- Submit -->
+      <button class="btn-login" id="loginBtn" type="button">
+        <span class="btn-text">
+          <span class="btn-spinner" id="btnSpinner"></span>
+          <span id="btnLabel">Sign In →</span>
+        </span>
+      </button>
+
+      <div class="divider"><span>secure access</span></div>
+
+      <div class="security-badges">
+        <div class="badge"><span class="badge-icon">🔐</span> Encrypted</div>
+        <div class="badge"><span class="badge-icon">🛡️</span> Secure Session</div>
+        <div class="badge"><span class="badge-icon">⚖️</span> Legal Use Only</div>
+      </div>
+
+    </div>
+
+    <div class="login-note">
+      Access is restricted to <strong>registered trademark professionals</strong>.<br/>
+      Contact your administrator if you need access.
+    </div>
+
+  </div>
+</main>
+
+<!-- Footer -->
+<footer>
+  <strong style="color:rgba(255,255,255,0.35)">tmOsphere</strong>
+  &nbsp;·&nbsp; India · Trade Marks Act, 1999
+  &nbsp;·&nbsp; <em>For professional use only</em>
+</footer>
+
+<script>
+  // ── Redirect if already logged in ──────────────────────────────────────
+  (function() {
+    const token = localStorage.getItem('tmosphere_token');
+    if (!token) return;
+    const API_BASE = (location.hostname==='localhost'||location.hostname==='127.0.0.1')
+      ? 'http://localhost:3001' : '';
+    fetch(API_BASE + '/api/me', { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(r => { if (r.ok) window.location.replace('/'); })
+      .catch(() => {});
+  })();
+
+  // ── Password visibility toggle ───────────────────────────────────────────
+  const pwInput   = document.getElementById('password');
+  const pwToggle  = document.getElementById('pwToggle');
+  let pwVisible   = false;
+
+  pwToggle.addEventListener('click', () => {
+    pwVisible = !pwVisible;
+    pwInput.type    = pwVisible ? 'text' : 'password';
+    pwToggle.textContent = pwVisible ? '🙈' : '👁';
+  });
+
+  // ── Alert helpers ────────────────────────────────────────────────────────
+  const alertBox = document.getElementById('alertBox');
+  const alertMsg = document.getElementById('alertMsg');
+
+  function showAlert(msg) {
+    alertMsg.textContent = msg;
+    alertBox.classList.add('show');
+    // Scroll to top of card smoothly
+    alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function hideAlert() { alertBox.classList.remove('show'); }
+
+  // Clear alert on input change
+  document.getElementById('email').addEventListener('input', hideAlert);
+  pwInput.addEventListener('input', hideAlert);
+
+  // ── Login handler ────────────────────────────────────────────────────────
+  const loginBtn  = document.getElementById('loginBtn');
+  const btnLabel  = document.getElementById('btnLabel');
+  const btnSpinner= document.getElementById('btnSpinner');
+
+  function setLoading(on) {
+    loginBtn.disabled       = on;
+    btnSpinner.style.display= on ? 'block' : 'none';
+    btnLabel.textContent    = on ? 'Signing in…' : 'Sign In →';
+  }
+
+  async function doLogin() {
+    hideAlert();
+
+    const email    = document.getElementById('email').value.trim();
+    const password = pwInput.value;
+    const remember = document.getElementById('rememberMe').checked;
+
+    // Basic client-side validation
+    if (!email) {
+      document.getElementById('email').classList.add('error');
+      showAlert('Please enter your email address.');
+      document.getElementById('email').focus();
+      return;
+    }
+    if (!password) {
+      pwInput.classList.add('error');
+      showAlert('Please enter your password.');
+      pwInput.focus();
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:3001' : '';
+
+      const res = await fetch(API_BASE + '/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, remember })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.success) {
+        // Store token then redirect
+        localStorage.setItem('tmosphere_token', data.token);
+        btnLabel.textContent = '✅ Success! Redirecting…';
+        setTimeout(() => { window.location.href = '/'; }, 800);
+      } else {
+        showAlert(data.error || 'Invalid email or password. Please try again.');
+        document.getElementById('email').classList.add('error');
+        pwInput.classList.add('error');
+        setLoading(false);
+      }
+
+    } catch (err) {
+      showAlert('Unable to connect. Please check your connection and try again.');
+      setLoading(false);
+    }
+  }
+
+  // Remove error styling on re-focus
+  ['email','password'].forEach(id => {
+    document.getElementById(id).addEventListener('focus', function() {
+      this.classList.remove('error');
+    });
+  });
+
+  // Click or Enter to submit
+  loginBtn.addEventListener('click', doLogin);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  // ── Forgot password ──────────────────────────────────────────────────────
+  document.getElementById('forgotLink').addEventListener('click', e => {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    if (!email) {
+      showAlert('Enter your email address first, then click "Forgot password?"');
+      document.getElementById('email').focus();
+      return;
+    }
+    // Placeholder — wire up to /api/forgot-password when backend is ready
+    alertBox.style.background = '#e8f5ee';
+    alertBox.style.borderColor = '#6abf87';
+    alertMsg.style.color = '#1a5c35';
+    showAlert('✅ If an account exists for ' + email + ', a reset link has been sent.');
+  });
+</script>
+</body>
+</html>
