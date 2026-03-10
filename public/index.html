@@ -12,11 +12,12 @@
       --ink: #0e0e0f; --cream: #f7f4ef; --gold: #c9a84c; --gold-light: #e8d08a;
       --rust: #b84c2a; --parchment: #ede8df; --border: #d4cfc7;
       --text: #2c2c2e; --muted: #7c7068; --green: #2e7d4f; --green-bg: #e8f5ee;
+      --blue-bg: #eef3fd; --blue: #2a5cba;
     }
     html { scroll-behavior: smooth; }
     body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
 
-    /* ── Header ── */
+    /* Header */
     header {
       background: var(--ink); padding: 0 2.5rem;
       display: flex; align-items: center; justify-content: space-between;
@@ -34,61 +35,74 @@
     .logo-name span { color: var(--gold); }
     .header-tag { font-size: 0.72rem; color: #a09880; letter-spacing: 0.14em; text-transform: uppercase; }
 
-    /* ── Hero ── */
-    .hero { background: var(--ink); padding: 3.5rem 2.5rem 4rem; text-align: center; position: relative; overflow: hidden; }
+    /* Hero */
+    .hero { background: var(--ink); padding: 3rem 2.5rem 3.8rem; text-align: center; position: relative; overflow: hidden; }
     .hero::before {
       content: ''; position: absolute; inset: 0;
       background: repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(201,168,76,0.04) 40px, rgba(201,168,76,0.04) 41px);
     }
-    .hero-eyebrow { font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; }
-    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem,5vw,3.2rem); font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 1rem; position: relative; }
-    .hero p { color: #a09880; font-size: 1rem; max-width: 520px; margin: 0 auto; line-height: 1.7; }
+    .hero-eyebrow { font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.9rem; }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.9rem,4.5vw,3rem); font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 0.9rem; position: relative; }
+    .hero p { color: #a09880; font-size: 0.97rem; max-width: 520px; margin: 0 auto; line-height: 1.7; }
 
-    /* ── Layout ── */
-    .container { max-width: 900px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+    /* Layout */
+    .container { max-width: 920px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
 
-    /* ── Section header ── */
+    /* Section header */
     .section-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
     .section-icon { width: 32px; height: 32px; background: var(--ink); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 14px; flex-shrink: 0; }
-    .section-header h2 { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 600; color: var(--ink); }
-    .section-header p { font-size: 0.8rem; color: var(--muted); margin-top: 1px; }
+    .section-header h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; color: var(--ink); }
+    .section-header p { font-size: 0.79rem; color: var(--muted); margin-top: 1px; }
 
-    /* ── Card ── */
-    .card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    /* Card */
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem 2rem; margin-bottom: 1.8rem; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
 
-    /* ── Grid ── */
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2rem; }
+    /* Grid */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.1rem; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.1rem; }
     .span-2 { grid-column: span 2; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
 
-    /* ── Fields ── */
-    .field { display: flex; flex-direction: column; gap: 0.4rem; }
-    label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    /* Fields */
+    .field { display: flex; flex-direction: column; gap: 0.38rem; }
+    label { font-size: 0.76rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
     label .req { color: var(--rust); margin-left: 2px; }
     input, select, textarea {
-      font-family: 'DM Sans', sans-serif; font-size: 0.93rem; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 0.92rem; color: var(--text);
       background: var(--cream); border: 1.5px solid var(--border); border-radius: 7px;
-      padding: 0.65rem 0.85rem; width: 100%; transition: border-color 0.18s, box-shadow 0.18s; outline: none;
+      padding: 0.62rem 0.85rem; width: 100%; transition: border-color 0.18s, box-shadow 0.18s; outline: none;
     }
     input:focus, select:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); background: #fff; }
-    input:disabled, select:disabled { opacity: 0.6; cursor: not-allowed; background: #f0ede8; }
+    input:disabled, select:disabled { opacity: 0.58; cursor: not-allowed; background: #edeae5; }
+    textarea { resize: vertical; min-height: 64px; }
 
-    /* ── Attorney saved banner ── */
+    /* Auto-filled designation badge */
+    .designation-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: var(--blue-bg); border: 1px solid #c0d0f0; border-radius: 6px;
+      padding: 0.6rem 0.85rem; font-size: 0.88rem; font-weight: 600; color: var(--blue);
+      min-height: 42px;
+    }
+    .designation-badge span { font-size: 0.72rem; font-weight: 400; color: #6080c0; }
+
+    /* Attorney saved banner */
     .attorney-banner {
       display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
       background: var(--green-bg); border: 1.5px solid #a3d4b8; border-radius: 10px;
-      padding: 0.9rem 1.15rem; margin-bottom: 1.4rem;
+      padding: 0.85rem 1.1rem; margin-bottom: 1.3rem;
       animation: fadeDown 0.3s ease;
     }
     @keyframes fadeDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
     .banner-left { display: flex; align-items: center; gap: 0.7rem; }
-    .banner-icon { font-size: 1.4rem; line-height: 1; }
-    .banner-name { font-size: 0.9rem; font-weight: 600; color: var(--green); }
-    .banner-sub  { font-size: 0.76rem; color: #4a8c64; margin-top: 1px; }
+    .banner-icon { font-size: 1.3rem; line-height: 1; }
+    .banner-name { font-size: 0.88rem; font-weight: 600; color: var(--green); }
+    .banner-sub  { font-size: 0.74rem; color: #4a8c64; margin-top: 2px; }
     .banner-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
     .btn-sm {
-      font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 600;
-      padding: 0.4rem 0.85rem; border-radius: 6px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; font-size: 0.76rem; font-weight: 600;
+      padding: 0.38rem 0.8rem; border-radius: 6px; cursor: pointer;
       border: 1.5px solid; transition: all 0.15s; white-space: nowrap; background: #fff;
     }
     .btn-edit  { color: var(--green); border-color: #a3d4b8; }
@@ -96,10 +110,10 @@
     .btn-clear { color: var(--rust); border-color: #f0b8a8; }
     .btn-clear:hover { background: #fdf0ec; }
 
-    /* ── Save checkbox ── */
+    /* Save checkbox row */
     .save-row {
       display: flex; align-items: center; gap: 0.65rem;
-      margin-top: 1.3rem; padding-top: 1.1rem;
+      margin-top: 1.2rem; padding-top: 1.1rem;
       border-top: 1px dashed var(--border);
     }
     .save-row input[type="checkbox"] {
@@ -107,44 +121,44 @@
       cursor: pointer; padding: 0; border: none; background: none;
     }
     .save-row label {
-      font-size: 0.83rem; font-weight: 500; letter-spacing: 0; text-transform: none;
+      font-size: 0.82rem; font-weight: 500; letter-spacing: 0; text-transform: none;
       color: var(--text); cursor: pointer;
     }
-    .save-row label small { color: var(--muted); font-size: 0.74rem; }
+    .save-row label small { color: var(--muted); font-size: 0.73rem; }
 
-    /* ── Dividers ── */
-    .doc-divider { display: flex; align-items: center; gap: 1rem; margin: 2.5rem 0 1.5rem; }
+    /* Dividers */
+    .doc-divider { display: flex; align-items: center; gap: 1rem; margin: 2rem 0 1.4rem; }
     .doc-divider::before, .doc-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
     .doc-divider-label {
       display: flex; align-items: center; gap: 0.5rem;
       background: var(--parchment); border: 1px solid var(--border); border-radius: 20px;
-      padding: 0.3rem 0.9rem; font-size: 0.72rem; font-weight: 600;
+      padding: 0.28rem 0.85rem; font-size: 0.71rem; font-weight: 600;
       letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); white-space: nowrap;
     }
-    .doc-tag { display: inline-flex; padding: 0.15rem 0.6rem; border-radius: 4px; font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+    .doc-tag { display: inline-flex; padding: 0.14rem 0.55rem; border-radius: 4px; font-size: 0.67rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
     .tag-affidavit { background: #e8f0fd; color: #2a5cba; }
     .tag-poa { background: #fdf0e8; color: #b86020; }
 
-    /* ── Generate button ── */
+    /* Generate button */
     .btn-generate {
-      width: 100%; padding: 1.15rem; background: var(--ink); color: #fff;
-      font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 600; letter-spacing: 0.05em;
+      width: 100%; padding: 1.1rem; background: var(--ink); color: #fff;
+      font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 600; letter-spacing: 0.04em;
       border: none; border-radius: 10px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 0.65rem;
+      display: flex; align-items: center; justify-content: center; gap: 0.6rem;
       margin-top: 1rem; position: relative; overflow: hidden; transition: background 0.2s, transform 0.1s;
     }
     .btn-generate::before {
       content: ''; position: absolute; inset: 0;
-      background: linear-gradient(90deg, transparent, rgba(201,168,76,0.15), transparent);
+      background: linear-gradient(90deg, transparent, rgba(201,168,76,0.18), transparent);
       transform: translateX(-100%); transition: transform 0.55s;
     }
     .btn-generate:hover::before { transform: translateX(100%); }
     .btn-generate:hover { background: #1c1c1e; }
     .btn-generate:active { transform: scale(0.99); }
-    .btn-generate:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ── Status ── */
-    .status-bar { margin-top: 1.4rem; padding: 1rem 1.25rem; border-radius: 8px; font-size: 0.88rem; display: none; align-items: center; gap: 0.65rem; }
+    /* Status */
+    .status-bar { margin-top: 1.3rem; padding: 0.95rem 1.2rem; border-radius: 8px; font-size: 0.87rem; display: none; align-items: center; gap: 0.6rem; }
     .status-bar.show { display: flex; }
     .status-bar.loading { background: #fefae8; border: 1px solid #e8d56a; color: #7a6210; }
     .status-bar.success { background: #e8f7ee; border: 1px solid #6abf87; color: #1a5c35; }
@@ -152,13 +166,13 @@
     .spinner { width: 16px; height: 16px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Footer ── */
-    footer { text-align: center; padding: 2rem; font-size: 0.78rem; color: var(--muted); border-top: 1px solid var(--border); }
+    /* Footer */
+    footer { text-align: center; padding: 2rem; font-size: 0.77rem; color: var(--muted); border-top: 1px solid var(--border); }
     footer strong { color: var(--ink); }
 
-    @media (max-width: 640px) {
-      .grid-2, .grid-3 { grid-template-columns: 1fr; }
-      .span-2 { grid-column: span 1; }
+    @media (max-width: 680px) {
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .span-2, .span-3, .span-4 { grid-column: span 1; }
       header { padding: 0 1.2rem; }
       .attorney-banner { flex-direction: column; align-items: flex-start; }
     }
@@ -183,27 +197,53 @@
 <div class="container">
   <form id="tmForm" autocomplete="off">
 
-    <!-- ─── APPLICANT DETAILS ─── -->
+    <!-- ─── APPLICANT & BUSINESS DETAILS ─── -->
     <div class="card">
       <div class="section-header">
         <div class="section-icon">👤</div>
-        <div><h2>Applicant Details</h2><p>Shared across both documents</p></div>
+        <div><h2>Applicant &amp; Business Details</h2><p>Used across both documents</p></div>
       </div>
+
       <div class="grid-2">
+        <!-- Row 1 -->
         <div class="field">
-          <label>Full Name <span class="req">*</span></label>
-          <input type="text" name="applicantName" placeholder="e.g. Mr. Vansh Mahajan" required />
+          <label>Applicant Full Name <span class="req">*</span></label>
+          <input type="text" name="applicantName" id="applicantName" placeholder="e.g. Mr. Vansh Mahajan" required />
         </div>
         <div class="field">
-          <label>Brand / Trademark Name <span class="req">*</span></label>
-          <input type="text" name="brandName" placeholder="e.g. CONNECTIFY" required />
+          <label>Business / Entity Type <span class="req">*</span></label>
+          <select name="businessType" id="businessType" required>
+            <option value="">— Select entity type —</option>
+            <option value="Proprietorship">Proprietorship</option>
+            <option value="Partnership">Partnership</option>
+            <option value="LLP">LLP (Limited Liability Partnership)</option>
+            <option value="Private Limited">Private Limited Company</option>
+            <option value="Public Limited">Public Limited Company</option>
+            <option value="HUF">HUF (Hindu Undivided Family)</option>
+            <option value="Trust">Trust</option>
+          </select>
         </div>
+
+        <!-- Designation auto-fill row -->
+        <div class="field">
+          <label>Designation (auto-filled)</label>
+          <div class="designation-badge" id="designationBadge">
+            <span>Select entity type above</span>
+          </div>
+          <input type="hidden" name="designation" id="designationHidden" value="" />
+        </div>
+        <div class="field">
+          <label>Business / Company Name <span class="req">*</span></label>
+          <input type="text" name="businessName" id="businessName" placeholder="e.g. CONNECTIFY" required />
+        </div>
+
+        <!-- Row 3 -->
         <div class="field span-2">
           <label>Registered Office Address <span class="req">*</span></label>
           <input type="text" name="registeredAddress" placeholder="Shop No., Building, Street, City, State – PIN, INDIA" required />
         </div>
         <div class="field span-2">
-          <label>Residential Address <span class="req">*</span></label>
+          <label>Applicant Residential / Personal Address <span class="req">*</span></label>
           <input type="text" name="residentialAddress" placeholder="Plot/House No., Society, Area, City, State – PIN" required />
         </div>
       </div>
@@ -213,12 +253,18 @@
     <div class="doc-divider">
       <div class="doc-divider-label"><span class="doc-tag tag-affidavit">Document 1</span>Affidavit</div>
     </div>
+
     <div class="card">
       <div class="section-header">
         <div class="section-icon">📄</div>
-        <div><h2>Affidavit Details</h2><p>Trademark class, business type, date &amp; place</p></div>
+        <div><h2>Affidavit Details</h2><p>Trademark / brand details, class, date &amp; place</p></div>
       </div>
+
       <div class="grid-3">
+        <div class="field span-3">
+          <label>Brand / Trademark Name <span class="req">*</span> &nbsp;<small style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(can differ from business name)</small></label>
+          <input type="text" name="brandName" placeholder="e.g. CONNECTIFY (the mark being applied for)" required />
+        </div>
         <div class="field">
           <label>Trademark Class <span class="req">*</span></label>
           <select name="businessClass" required>
@@ -271,21 +317,17 @@
           </select>
         </div>
         <div class="field">
-          <label>Business Type <span class="req">*</span></label>
-          <input type="text" name="businessType" value="BUSINESS" placeholder="e.g. BUSINESS / SERVICES / GOODS" required />
-        </div>
-        <div class="field">
           <label>Place of Signing <span class="req">*</span></label>
           <input type="text" name="place" placeholder="e.g. SURAT" required />
         </div>
         <div class="field">
           <label>Affidavit Date <span class="req">*</span></label>
-          <input type="date" name="affidavitDate" required />
+          <input type="date" name="affidavitDate" id="affidavitDate" required />
         </div>
       </div>
     </div>
 
-    <!-- ─── POA ─── -->
+    <!-- ─── POWER OF ATTORNEY ─── -->
     <div class="doc-divider">
       <div class="doc-divider-label"><span class="doc-tag tag-poa">Document 2</span>Power of Attorney</div>
     </div>
@@ -293,7 +335,7 @@
     <div class="card">
       <div class="section-header">
         <div class="section-icon">⚖️</div>
-        <div><h2>Power of Attorney — Attorney Details</h2><p>Authorised agent and execution details</p></div>
+        <div><h2>Attorney / Agent Details</h2><p>Authorised trademark agent details</p></div>
       </div>
 
       <!-- Saved attorney banner -->
@@ -302,7 +344,7 @@
           <div class="banner-icon">✅</div>
           <div>
             <div class="banner-name" id="bannerName">Saved Attorney</div>
-            <div class="banner-sub">Details pre-filled from saved profile</div>
+            <div class="banner-sub">Pre-filled from saved profile · POA date is always editable</div>
           </div>
         </div>
         <div class="banner-actions">
@@ -327,17 +369,13 @@
             <input type="text" id="agentAddress" name="agentAddress" placeholder="Full office address of the trademark attorney" required />
           </div>
           <div class="field">
-            <label>POA Execution Date <span class="req">*</span></label>
+            <label>POA Execution Date (written) <span class="req">*</span></label>
             <input type="text" id="poaExecutionDate" name="poaExecutionDate" placeholder="e.g. 3rd day of September, 2025" required />
           </div>
           <div class="field">
-            <label>POA Signing Date <span class="req">*</span></label>
-            <input type="date" id="poaDate" name="poaDate" required />
-          </div>
-          <div class="field span-2">
             <label>TM Registry Office <span class="req">*</span></label>
             <select id="tmOffice" name="tmOffice" required>
-              <option value="New Delhi, Ahmedabad, Mumbai, Kolkata, Chennai">All Offices (New Delhi, Ahmedabad, Mumbai, Kolkata, Chennai)</option>
+              <option value="New Delhi, Ahmedabad, Mumbai, Kolkata, Chennai">All Offices</option>
               <option value="New Delhi">New Delhi</option>
               <option value="Ahmedabad">Ahmedabad</option>
               <option value="Mumbai">Mumbai</option>
@@ -351,16 +389,24 @@
         <div class="save-row" id="saveRow">
           <input type="checkbox" id="saveCheck" />
           <label for="saveCheck">
-            💾 &nbsp;Save attorney details for future forms
+            💾 &nbsp;Save attorney details for future forms &nbsp;
             <small>(stored in your browser — auto-fills next time)</small>
           </label>
+        </div>
+      </div>
+
+      <!-- POA signing date — always shown, always editable -->
+      <div style="margin-top:1.2rem; padding-top:1.1rem; border-top:1px solid var(--border);">
+        <div class="field" style="max-width:280px;">
+          <label>POA Signing Date <span class="req">*</span></label>
+          <input type="date" id="poaDate" name="poaDate" required />
         </div>
       </div>
     </div>
 
     <!-- ─── GENERATE ─── -->
     <button type="submit" class="btn-generate" id="genBtn">
-      <span>⬇️</span> Generate &amp; Download Both Documents
+      <span>⬇️</span>&nbsp; Generate &amp; Download Both Documents
     </button>
 
     <div class="status-bar" id="statusBar">
@@ -374,173 +420,188 @@
 <footer>
   <strong>tmOsphere</strong> — Trademark Document Generator &nbsp;·&nbsp;
   India · Trade Marks Act, 1999 &nbsp;·&nbsp;
-  <em>For professional use only. Consult a registered trademark agent.</em>
+  <em>For professional use only. Always consult a registered trademark agent.</em>
 </footer>
 
 <script>
-  // ── Constants ──────────────────────────────────────────────────────────
-  const STORAGE_KEY     = 'tmosphere_attorney_v1';
-  const ATTORNEY_INPUTS = ['agentName', 'agentCode', 'agentAddress', 'poaExecutionDate', 'tmOffice'];
+// ── Business type → designation map ─────────────────────────────────────────
+const DESIGNATION_MAP = {
+  'Proprietorship' : 'PROPRIETOR',
+  'Partnership'    : 'PARTNER',
+  'LLP'            : 'DESIGNATED PARTNER',
+  'Private Limited': 'DIRECTOR',
+  'Public Limited' : 'DIRECTOR',
+  'HUF'            : 'KARTA',
+  'Trust'          : 'TRUSTEE'
+};
 
-  // ── DOM refs ───────────────────────────────────────────────────────────
-  const savedBanner = document.getElementById('savedBanner');
-  const bannerName  = document.getElementById('bannerName');
-  const btnEdit     = document.getElementById('btnEdit');
-  const btnClear    = document.getElementById('btnClear');
-  const saveCheck   = document.getElementById('saveCheck');
-  const saveRow     = document.getElementById('saveRow');
-  const form        = document.getElementById('tmForm');
-  const genBtn      = document.getElementById('genBtn');
-  const statusBar   = document.getElementById('statusBar');
-  const statusMsg   = document.getElementById('statusMsg');
-  const spinner     = document.getElementById('spinner');
+const designationBadge  = document.getElementById('designationBadge');
+const designationHidden = document.getElementById('designationHidden');
 
-  // ── Storage helpers ────────────────────────────────────────────────────
-  function loadSaved() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null; } catch { return null; }
+document.getElementById('businessType').addEventListener('change', function () {
+  const val = this.value;
+  const des = DESIGNATION_MAP[val] || '';
+  designationHidden.value = des;
+  if (des) {
+    designationBadge.innerHTML = '<strong>' + des + '</strong>';
+    designationBadge.style.background = 'var(--blue-bg)';
+  } else {
+    designationBadge.innerHTML = '<span>Select entity type above</span>';
   }
-  function persistAttorney(obj) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
-  }
-  function deleteAttorney() {
-    localStorage.removeItem(STORAGE_KEY);
-  }
+});
 
-  // ── Field lock/unlock ──────────────────────────────────────────────────
-  function setFieldsLocked(locked) {
-    ATTORNEY_INPUTS.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.disabled = locked;
-    });
-    // poaDate is always editable (date changes each filing)
-    document.getElementById('poaDate').disabled = false;
-  }
+// ── Attorney saved profile ───────────────────────────────────────────────────
+const STORAGE_KEY     = 'tmosphere_attorney_v2';
+const ATTORNEY_INPUTS = ['agentName', 'agentCode', 'agentAddress', 'poaExecutionDate', 'tmOffice'];
 
-  function populateFields(data) {
-    ATTORNEY_INPUTS.forEach(id => {
-      const el = document.getElementById(id);
-      if (el && data[id] != null) el.value = data[id];
-    });
-  }
+const savedBanner = document.getElementById('savedBanner');
+const bannerName  = document.getElementById('bannerName');
+const btnEdit     = document.getElementById('btnEdit');
+const btnClear    = document.getElementById('btnClear');
+const saveCheck   = document.getElementById('saveCheck');
+const saveRow     = document.getElementById('saveRow');
 
-  function clearFields() {
-    ATTORNEY_INPUTS.forEach(id => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      if (el.tagName === 'SELECT') el.selectedIndex = 0;
-      else el.value = '';
-    });
-  }
+function loadSaved() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null; } catch { return null; }
+}
+function persistAttorney(obj) { localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }
+function deleteAttorney()      { localStorage.removeItem(STORAGE_KEY); }
 
-  // ── Banner ─────────────────────────────────────────────────────────────
-  function showBanner(name, code) {
-    bannerName.textContent = name + (code ? '  ·  Code: ' + code : '');
-    savedBanner.style.display = 'flex';
-    saveRow.style.display = 'none';
-  }
+function setFieldsLocked(locked) {
+  ATTORNEY_INPUTS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = locked;
+  });
+}
 
-  function hideBanner() {
-    savedBanner.style.display = 'none';
-    saveRow.style.display = 'flex';
-  }
+function populateFields(data) {
+  ATTORNEY_INPUTS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && data[id] != null) el.value = data[id];
+  });
+}
 
-  // ── Init: load saved attorney on page load ─────────────────────────────
-  const today = new Date().toISOString().split('T')[0];
-  document.querySelector('[name="affidavitDate"]').value = today;
-  document.getElementById('poaDate').value = today;
+function clearAttyFields() {
+  ATTORNEY_INPUTS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.tagName === 'SELECT' ? (el.selectedIndex = 0) : (el.value = '');
+  });
+}
 
-  const saved = loadSaved();
-  if (saved) {
-    populateFields(saved);
+function showBanner(name, code) {
+  bannerName.textContent = name + (code ? '  ·  Code: ' + code : '');
+  savedBanner.style.display = 'flex';
+  saveRow.style.display = 'none';
+}
+function hideBanner() {
+  savedBanner.style.display = 'none';
+  saveRow.style.display = 'flex';
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('affidavitDate').value = today;
+document.getElementById('poaDate').value = today;
+
+const saved = loadSaved();
+if (saved) {
+  populateFields(saved);
+  setFieldsLocked(true);
+  showBanner(saved.agentName || 'Saved Attorney', saved.agentCode || '');
+}
+
+btnEdit.addEventListener('click', () => {
+  setFieldsLocked(false);
+  hideBanner();
+  saveCheck.checked = true;
+  document.getElementById('agentName').focus();
+});
+
+btnClear.addEventListener('click', () => {
+  if (!confirm('Remove saved attorney profile? You will need to re-enter details next time.')) return;
+  deleteAttorney();
+  clearAttyFields();
+  setFieldsLocked(false);
+  hideBanner();
+  saveCheck.checked = false;
+});
+
+// ── Form submit ───────────────────────────────────────────────────────────────
+const form      = document.getElementById('tmForm');
+const genBtn    = document.getElementById('genBtn');
+const statusBar = document.getElementById('statusBar');
+const statusMsg = document.getElementById('statusMsg');
+const spinner   = document.getElementById('spinner');
+
+function showStatus(type, msg, spin) {
+  statusBar.className = 'status-bar show ' + type;
+  statusMsg.textContent = msg;
+  spinner.style.display = spin ? 'block' : 'none';
+  statusBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+form.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  genBtn.disabled = true;
+  showStatus('loading', 'Generating your trademark documents…', true);
+
+  // Unlock locked fields momentarily so FormData captures them
+  const wasLocked = [];
+  ATTORNEY_INPUTS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.disabled) { el.disabled = false; wasLocked.push(id); }
+  });
+
+  const data = Object.fromEntries(new FormData(form).entries());
+
+  // Re-lock
+  wasLocked.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
+
+  // Save attorney if checked
+  if (saveCheck.checked) {
+    const toSave = {};
+    ATTORNEY_INPUTS.forEach(id => { toSave[id] = data[id] || ''; });
+    persistAttorney(toSave);
     setFieldsLocked(true);
-    showBanner(saved.agentName || 'Saved Attorney', saved.agentCode || '');
+    showBanner(toSave.agentName, toSave.agentCode);
   }
 
-  // ── Edit button ────────────────────────────────────────────────────────
-  btnEdit.addEventListener('click', () => {
-    setFieldsLocked(false);
-    hideBanner();
-    saveCheck.checked = true;
-    document.getElementById('agentName').focus();
-  });
+  // Determine API base: same origin when hosted on Render, localhost for dev
+  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3001'
+    : '';
 
-  // ── Clear / Remove button ──────────────────────────────────────────────
-  btnClear.addEventListener('click', () => {
-    if (!confirm('Remove saved attorney profile? You will need to re-enter details next time.')) return;
-    deleteAttorney();
-    clearFields();
-    setFieldsLocked(false);
-    hideBanner();
-    saveCheck.checked = false;
-  });
+  try {
+    const res = await fetch(API_BASE + '/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
 
-  // ── Status helper ──────────────────────────────────────────────────────
-  function showStatus(type, msg, spin = false) {
-    statusBar.className = 'status-bar show ' + type;
-    statusMsg.textContent = msg;
-    spinner.style.display = spin ? 'block' : 'none';
+    if (!res.ok) {
+      let errMsg = 'Server error ' + res.status;
+      try { const j = await res.json(); errMsg = j.error || errMsg; } catch {}
+      throw new Error(errMsg);
+    }
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'TM_Documents_' + (data.brandName || 'trademark').replace(/\s+/g, '_') + '.zip';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    showStatus('success', '✅ Documents for "' + data.brandName + '" downloaded! Check your downloads folder.', false);
+  } catch (err) {
+    showStatus('error', '❌ ' + err.message, false);
+  } finally {
+    genBtn.disabled = false;
   }
-
-  // ── Form submit ────────────────────────────────────────────────────────
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    genBtn.disabled = true;
-    showStatus('loading', 'Generating your trademark documents…', true);
-
-    // Temporarily re-enable locked fields so FormData captures them
-    const wasLocked = [];
-    ATTORNEY_INPUTS.forEach(id => {
-      const el = document.getElementById(id);
-      if (el && el.disabled) { el.disabled = false; wasLocked.push(id); }
-    });
-
-    const data = Object.fromEntries(new FormData(form).entries());
-
-    // Re-lock
-    wasLocked.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.disabled = true;
-    });
-
-    // Save attorney if checkbox checked
-    if (saveCheck.checked) {
-      const toSave = {};
-      ATTORNEY_INPUTS.forEach(id => { toSave[id] = data[id] || ''; });
-      persistAttorney(toSave);
-      setFieldsLocked(true);
-      showBanner(toSave.agentName, toSave.agentCode);
-    }
-
-    try {
-      // API is on same origin — no hardcoded URL needed
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Server error ' + res.status);
-      }
-
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = 'TM_Documents_' + data.brandName + '.zip';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-
-      showStatus('success', '✅ Documents for "' + data.brandName + '" downloaded successfully!');
-    } catch (err) {
-      showStatus('error', '❌ ' + err.message);
-    } finally {
-      genBtn.disabled = false;
-    }
-  });
+});
 </script>
 </body>
 </html>
