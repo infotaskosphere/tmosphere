@@ -1,6 +1,7 @@
 const express = require('express');
 const path    = require('path');
 const JSZip   = require('jszip');
+const crypto  = require('crypto');
 const {
   Document, Packer, Paragraph, TextRun, AlignmentType,
   Table, TableRow, TableCell, WidthType, BorderStyle, VerticalAlign
@@ -11,6 +12,48 @@ const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTH — simple in-memory session store
+// To add/change users: edit USERS below or set env vars on Render:
+//   ADMIN_EMAIL and ADMIN_PASSWORD
+// ─────────────────────────────────────────────────────────────────────────────
+const USERS = [
+  {
+    email:    (process.env.ADMIN_EMAIL    || 'admin@tmosphere.in').toLowerCase(),
+    password: (process.env.ADMIN_PASSWORD || 'tmosphere@2024'),
+    name:     'Administrator'
+  }
+];
+
+// Session tokens: Map<token, { email, name, expires }>
+const SESSIONS = new Map();
+const SESSION_TTL = 8 * 60 * 60 * 1000; // 8 hours
+
+function createSession(email, name, remember) {
+  const token   = crypto.randomBytes(32).toString('hex');
+  const expires = Date.now() + (remember ? 30 * 24 * 60 * 60 * 1000 : SESSION_TTL);
+  SESSIONS.set(token, { email, name, expires });
+  return token;
+}
+
+function getSession(token) {
+  if (!token) return null;
+  const sess = SESSIONS.get(token);
+  if (!sess) return null;
+  if (Date.now() > sess.expires) { SESSIONS.delete(token); return null; }
+  return sess;
+}
+
+// Auth middleware — reads token from Authorization header or cookie
+function requireAuth(req, res, next) {
+  const header = req.headers['authorization'] || '';
+  const token  = header.startsWith('Bearer ') ? header.slice(7) : null;
+  const sess   = getSession(token);
+  if (!sess) return res.status(401).json({ error: 'Unauthorized. Please log in.' });
+  req.user = sess;
+  next();
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -333,7 +376,33 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', app: 'tmOsphere', version: '3.1.0' });
 });
 
-app.post('/api/generate', async (req, res) => {
+// ── Login ──────────────────────────────────────────────────────────────────
+app.post('/api/login', (req, res) => {
+  const { email = '', password = '', remember = false } = req.body;
+  const user = USERS.find(
+    u => u.email === email.toLowerCase().trim() && u.password === password
+  );
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid email or password.' });
+  }
+  const token = createSession(user.email, user.name, remember);
+  res.json({ success: true, token, name: user.name });
+});
+
+// ── Logout ─────────────────────────────────────────────────────────────────
+app.post('/api/logout', (req, res) => {
+  const header = req.headers['authorization'] || '';
+  const token  = header.startsWith('Bearer ') ? header.slice(7) : null;
+  if (token) SESSIONS.delete(token);
+  res.json({ success: true });
+});
+
+// ── Session check ───────────────────────────────────────────────────────────
+app.get('/api/me', requireAuth, (req, res) => {
+  res.json({ email: req.user.email, name: req.user.name });
+});
+
+app.post('/api/generate', requireAuth, async (req, res) => {
   try {
     const d = req.body;
 
@@ -380,5 +449,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log('✅  tmOsphere v3.1 running → http://localhost:' + PORT);
+  console.log('✅  tmOsphere v4.0 running → http://localhost:' + PORT);
 });
