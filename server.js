@@ -2,7 +2,8 @@ const express = require('express');
 const path    = require('path');
 const JSZip   = require('jszip');
 const {
-  Document, Packer, Paragraph, TextRun, AlignmentType
+  Document, Packer, Paragraph, TextRun, AlignmentType,
+  Table, TableRow, TableCell, WidthType, BorderStyle, VerticalAlign
 } = require('docx');
 
 const app  = express();
@@ -11,13 +12,14 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-const bold   = (t, sz = 22) => new TextRun({ text: String(t || ''), bold: true,  size: sz });
-const normal = (t, sz = 22) => new TextRun({ text: String(t || ''), bold: false, size: sz });
-const empty  = ()            => new Paragraph({ children: [] });
-const LINE   = '─'.repeat(95);
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
+const FONT = 'Cambria';
+const BODY_SIZE = 24;       // 12pt  (half-points)
+const TITLE_SIZE = 28;      // 14pt
+const HEADING_SIZE = 24;    // 12pt bold
 
-// Business type → designation map (mirrors frontend logic)
 const DESIGNATION_MAP = {
   'Private Limited' : 'DIRECTOR',
   'Public Limited'  : 'DIRECTOR',
@@ -28,28 +30,119 @@ const DESIGNATION_MAP = {
   'LLP'             : 'DESIGNATED PARTNER'
 };
 
-// ── Affidavit ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// TEXT RUN HELPERS  — all Cambria, justified paragraphs
+// ─────────────────────────────────────────────────────────────────────────────
+const R = (text, opts = {}) =>
+  new TextRun({
+    text: String(text || ''),
+    font: FONT,
+    size: opts.size || BODY_SIZE,
+    bold: opts.bold || false,
+    underline: opts.underline ? {} : undefined,
+  });
+
+const Rb = (text, opts = {}) => R(text, { ...opts, bold: true });
+
+// Standard justified paragraph with consistent spacing
+const P = (runs, opts = {}) =>
+  new Paragraph({
+    alignment: opts.align || AlignmentType.JUSTIFIED,
+    spacing: { after: opts.spaceAfter !== undefined ? opts.spaceAfter : 160, line: 276 },
+    children: Array.isArray(runs) ? runs : [runs],
+  });
+
+// Empty spacing paragraph
+const Gap = (pts = 80) =>
+  new Paragraph({ spacing: { after: pts }, children: [R('')] });
+
+// Horizontal rule using paragraph bottom border
+const HRule = () =>
+  new Paragraph({
+    spacing: { after: 160 },
+    border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '000000', space: 4 } },
+    children: [R('')],
+  });
+
+// Numbered list item
+const ListItem = (n, text) =>
+  new Paragraph({
+    alignment: AlignmentType.JUSTIFIED,
+    spacing: { after: 100, line: 276 },
+    indent: { left: 360, hanging: 360 },
+    children: [R(n + '.  ' + text)],
+  });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SIGNATURE TABLE — two-column layout, no border, proper alignment
+// ─────────────────────────────────────────────────────────────────────────────
+function noBorder() {
+  const none = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+  return { top: none, bottom: none, left: none, right: none, insideH: none, insideV: none };
+}
+
+function sigTable(leftLines, rightLines) {
+  // leftLines and rightLines are arrays of { text, bold }
+  const makeCell = (lines, align) =>
+    new TableCell({
+      width: { size: 4680, type: WidthType.DXA },
+      borders: noBorder(),
+      verticalAlign: VerticalAlign.TOP,
+      margins: { top: 0, bottom: 0, left: 0, right: 0 },
+      children: lines.map(l =>
+        new Paragraph({
+          alignment: align,
+          spacing: { after: 80, line: 276 },
+          children: [
+            l.bold
+              ? Rb(l.text)
+              : R(l.text)
+          ]
+        })
+      )
+    });
+
+  return new Table({
+    width: { size: 9360, type: WidthType.DXA },
+    borders: noBorder(),
+    rows: [
+      new TableRow({
+        children: [
+          makeCell(leftLines,  AlignmentType.LEFT),
+          makeCell(rightLines, AlignmentType.LEFT),
+        ]
+      })
+    ]
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AFFIDAVIT
+// ─────────────────────────────────────────────────────────────────────────────
 function buildAffidavit(d) {
   const designation = DESIGNATION_MAP[d.businessType] || d.businessType.toUpperCase();
+  const isProp      = d.businessType === 'Proprietorship';
 
-  // Opening line varies by entity type
-  let openingRuns;
-  if (d.businessType === 'Proprietorship') {
-    openingRuns = [
-      normal('I '), bold(d.applicantName),
-      normal(', Proprietor of "'), bold(d.businessName),
-      normal('" having registered office at '), bold(d.registeredAddress)
-    ];
-  } else {
-    openingRuns = [
-      normal('I '), bold(d.applicantName),
-      normal(', '), bold(designation),
-      normal(' of "'), bold(d.businessName),
-      normal('" having registered office at '), bold(d.registeredAddress)
-    ];
-  }
+  // Opening sentence
+  const openingRuns = isProp
+    ? [
+        R('I '), Rb(d.applicantName),
+        R(', Proprietor of "'), Rb(d.businessName),
+        R('" having registered office at '), Rb(d.registeredAddress), R('.')
+      ]
+    : [
+        R('I '), Rb(d.applicantName),
+        R(', '), Rb(designation),
+        R(' of "'), Rb(d.businessName),
+        R('" having registered office at '), Rb(d.registeredAddress), R('.')
+      ];
 
   return new Document({
+    styles: {
+      default: {
+        document: { run: { font: FONT, size: BODY_SIZE } }
+      }
+    },
     sections: [{
       properties: {
         page: {
@@ -58,63 +151,89 @@ function buildAffidavit(d) {
         }
       },
       children: [
+        // Title
         new Paragraph({
           alignment: AlignmentType.CENTER,
-          children: [new TextRun({ text: 'AFFIDAVIT', bold: true, size: 32 })]
+          spacing: { after: 0, line: 276 },
+          children: [new TextRun({ text: 'AFFIDAVIT', font: FONT, bold: true, size: TITLE_SIZE })]
         }),
-        new Paragraph({ children: [normal(LINE, 18)] }),
-        empty(),
-        new Paragraph({ children: openingRuns }),
-        empty(),
-        new Paragraph({ children: [normal('Do hereby solely affirm as follows:')] }),
-        empty(),
+        HRule(),
+
+        // Body paragraphs
+        P(openingRuns, { spaceAfter: 200 }),
+
+        P([R('Do hereby solely affirm as follows:')], { spaceAfter: 200 }),
+
+        P([
+          R('That I am an Indian by nationality and residing at '),
+          Rb(d.residentialAddress), R('.')
+        ], { spaceAfter: 200 }),
+
+        P([R(
+          'I state that I am familiar and well conversant with the facts and circumstances ' +
+          'of the present matters and competent and authorised to swear this affidavit and ' +
+          'make the necessary statements in respect thereof.'
+        )], { spaceAfter: 200 }),
+
+        P([
+          R('A trademark application is hereby made for registration of the accompanying trademark '),
+          Rb('"' + d.brandName + '"'),
+          R(' in '),
+          Rb('CLASS ' + d.businessClass),
+          R(' and the said mark has been proposed to be used for the said '),
+          Rb(d.businessType.toUpperCase()),
+          R('.')
+        ], { spaceAfter: 200 }),
+
+        P([R(
+          'I solemnly state that the content of this affidavit is true to the best of my ' +
+          'knowledge and belief and that it conceals nothing and that no part is false.'
+        )], { spaceAfter: 400 }),
+
+        // Signature
         new Paragraph({
-          children: [
-            normal('That I am an Indian by nationality and residing at '),
-            bold(d.residentialAddress), normal('.')
-          ]
+          spacing: { after: 120, line: 276 },
+          children: [Rb(d.applicantName)]
         }),
-        empty(),
         new Paragraph({
-          children: [normal(
-            'I state that I am familiar and well conversant with the facts and circumstances ' +
-            'of the present matters and competent and authorised to swear this affidavit and ' +
-            'make the necessary statements in respect thereof.'
-          )]
+          spacing: { after: 120, line: 276 },
+          children: [R('DATE: ' + d.affidavitDate)]
         }),
-        empty(),
         new Paragraph({
-          children: [
-            normal('A trademark application is hereby made for registration of the accompanying trademark '),
-            bold('"' + d.brandName + '"'),
-            normal(' in '),
-            bold('CLASS ' + d.businessClass),
-            normal(' and the said mark has been proposed to be used for the said '),
-            bold(d.businessType.toUpperCase()),
-            normal('.')
-          ]
+          spacing: { after: 0, line: 276 },
+          children: [R('PLACE: ' + d.place)]
         }),
-        empty(),
-        new Paragraph({
-          children: [normal(
-            'I solemnly state that the content of this affidavit is true to the best of my ' +
-            'knowledge and belief and that it conceals nothing and that no part is false.'
-          )]
-        }),
-        empty(), empty(),
-        new Paragraph({ children: [bold(d.applicantName)] }),
-        empty(),
-        new Paragraph({ children: [normal('DATE: ' + d.affidavitDate)] }),
-        empty(),
-        new Paragraph({ children: [normal('PLACE: ' + d.place)] }),
       ]
     }]
   });
 }
 
-// ── Power of Attorney ──────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// POWER OF ATTORNEY
+// ─────────────────────────────────────────────────────────────────────────────
 function buildPOA(d) {
   const designation = DESIGNATION_MAP[d.businessType] || d.businessType.toUpperCase();
+  const isProp      = d.businessType === 'Proprietorship';
+  const pronoun     = isProp ? 'I' : 'I/We';
+
+  const openingRuns = isProp
+    ? [
+        R('I '), Rb(d.applicantName),
+        R(', Proprietor of "'), Rb(d.businessName),
+        R('" having registered office at '), Rb(d.registeredAddress),
+        R(', do hereby appoint: '), Rb(d.agentName),
+        R(', having office at '), Rb(d.agentAddress),
+        R(', and having '), Rb('Trade Marks Agent Code ' + d.agentCode), R('.')
+      ]
+    : [
+        R('I/We '), Rb(d.applicantName),
+        R(', '), Rb(designation),
+        R(' of "'), Rb(d.businessName),
+        R('" having registered office at '), Rb(d.registeredAddress),
+        R(', do hereby appoint: '), Rb(d.agentName),
+        R(', having office at '), Rb(d.agentAddress),
+        R(', and having '), Rb('Trade Marks Agent Code ' + d.agentCode), R('.')
+      ];
 
   const items = [
     'Applying for registration of the following trademark(s) under the Trade Marks Act, 1999 and Rules made thereunder;',
@@ -125,30 +244,12 @@ function buildPOA(d) {
     'Taking all necessary steps, including appearing at hearings, filing affidavits or appeals, and performing other acts, deeds and things which are necessary or incidental to the registration and protection of the said mark(s).'
   ];
 
-  // Opening paragraph varies by entity type
-  let openingRuns;
-  if (d.businessType === 'Proprietorship') {
-    openingRuns = [
-      normal('I '), bold(d.applicantName),
-      normal(', Proprietor of "'), bold(d.businessName),
-      normal('" having registered office at '), bold(d.registeredAddress),
-      normal(', do hereby appoint: '), bold(d.agentName),
-      normal(', having office at '), bold(d.agentAddress),
-      normal(', and having '), bold('Trade Marks Agent Code ' + d.agentCode), normal('.')
-    ];
-  } else {
-    openingRuns = [
-      normal('I/We '), bold(d.applicantName),
-      normal(', '), bold(designation),
-      normal(' of "'), bold(d.businessName),
-      normal('" having registered office at '), bold(d.registeredAddress),
-      normal(', do hereby appoint: '), bold(d.agentName),
-      normal(', having office at '), bold(d.agentAddress),
-      normal(', and having '), bold('Trade Marks Agent Code ' + d.agentCode), normal('.')
-    ];
-  }
-
   return new Document({
+    styles: {
+      default: {
+        document: { run: { font: FONT, size: BODY_SIZE } }
+      }
+    },
     sections: [{
       properties: {
         page: {
@@ -157,65 +258,72 @@ function buildPOA(d) {
         }
       },
       children: [
+        // Title
         new Paragraph({
           alignment: AlignmentType.CENTER,
-          children: [new TextRun({ text: 'GENERAL POWER OF ATTORNEY FOR TRADEMARK/SERVICE MARK', bold: true, size: 26 })]
+          spacing: { after: 40, line: 276 },
+          children: [new TextRun({ text: 'GENERAL POWER OF ATTORNEY FOR TRADEMARK/SERVICE MARK', font: FONT, bold: true, size: TITLE_SIZE })]
         }),
         new Paragraph({
           alignment: AlignmentType.CENTER,
-          children: [normal('(UNDER SECTION 145 OF THE TRADEMARKS ACT, 1999)', 20)]
+          spacing: { after: 0, line: 276 },
+          children: [new TextRun({ text: '(UNDER SECTION 145 OF THE TRADEMARKS ACT, 1999)', font: FONT, size: BODY_SIZE })]
         }),
-        new Paragraph({ children: [normal(LINE, 18)] }),
-        empty(),
-        new Paragraph({ children: openingRuns }),
-        empty(),
-        new Paragraph({ children: [bold('As my/our lawful Attorney to act on my/our behalf in respect of:')] }),
-        empty(),
-        ...items.map((item, i) =>
-          new Paragraph({ children: [normal((i + 1) + '.  ' + item)] })
+        HRule(),
+
+        // Opening paragraph
+        P(openingRuns, { spaceAfter: 200 }),
+
+        // Attorney scope
+        P([Rb('As my/our lawful Attorney to act on my/our behalf in respect of:')], { spaceAfter: 140 }),
+
+        // Numbered items
+        ...items.map((item, i) => ListItem(i + 1, item)),
+
+        Gap(120),
+
+        // Ratification
+        P([
+          Rb(pronoun + '/We hereby confirm and ratify all acts done by the above-mentioned attorney ' +
+             'in pursuance of this authority executed on this '),
+          Rb(d.poaExecutionDate), Rb('.')
+        ], { spaceAfter: 400 }),
+
+        // ── Signature block as a proper 2-column table ──
+        sigTable(
+          [
+            { text: 'Signature of Applicant(s):', bold: true },
+            { text: 'Name: ' + d.applicantName,  bold: false },
+            { text: 'Designation: ' + designation, bold: true },
+            { text: 'For: ' + d.businessName,    bold: false },
+          ],
+          [
+            { text: 'Accepted by:',               bold: true },
+            { text: 'Name: ' + d.agentName,       bold: false },
+            { text: 'Agent Code: ' + d.agentCode, bold: false },
+            { text: '',                            bold: false },
+          ]
         ),
-        empty(),
-        new Paragraph({
-          children: [
-            bold('I/We hereby confirm and ratify all acts done by the above-mentioned attorney ' +
-                 'in pursuance of this authority executed on this '),
-            bold(d.poaExecutionDate), bold('.')
-          ]
-        }),
-        empty(), empty(),
-        new Paragraph({
-          children: [bold('Signature of Applicant(s):                                              Accepted by:')]
-        }),
-        new Paragraph({
-          children: [
-            normal('Name: ' + d.applicantName + '                                                    Name: '),
-            bold(d.agentName)
-          ]
-        }),
-        new Paragraph({
-          children: [
-            bold('Designation: ' + designation),
-            normal('                                               Agent Code: '),
-            bold(d.agentCode)
-          ]
-        }),
-        empty(),
-        new Paragraph({ children: [normal('For: '), bold(d.businessName)] }),
-        empty(),
-        new Paragraph({ children: [bold('To,')] }),
-        new Paragraph({ children: [bold('The Registrar of Trade Marks,')] }),
-        new Paragraph({ children: [bold('The Office of the Trade Marks Registry at')] }),
-        new Paragraph({ children: [bold(d.tmOffice)] }),
-        empty(),
-        new Paragraph({ children: [normal('Date: ' + d.poaDate)] }),
+
+        Gap(200),
+
+        // Address block
+        new Paragraph({ spacing: { after: 80, line: 276 }, children: [Rb('To,')] }),
+        new Paragraph({ spacing: { after: 80, line: 276 }, children: [Rb('The Registrar of Trade Marks,')] }),
+        new Paragraph({ spacing: { after: 80, line: 276 }, children: [Rb('The Office of the Trade Marks Registry at')] }),
+        new Paragraph({ spacing: { after: 200, line: 276 }, children: [Rb(d.tmOffice)] }),
+
+        new Paragraph({ spacing: { after: 0, line: 276 }, children: [R('Date: ' + d.poaDate)] }),
       ]
     }]
   });
 }
 
-// ── Routes ─────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// ROUTES
+// ─────────────────────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', app: 'tmOsphere', version: '2.0.0' });
+  res.json({ status: 'ok', app: 'tmOsphere', version: '3.0.0' });
 });
 
 app.post('/api/generate', async (req, res) => {
@@ -262,5 +370,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log('✅  tmOsphere v2 running → http://localhost:' + PORT);
+  console.log('✅  tmOsphere v3 running → http://localhost:' + PORT);
 });
