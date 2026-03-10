@@ -30,6 +30,18 @@ const DESIGNATION_MAP = {
   'LLP'             : 'DESIGNATED PARTNER'
 };
 
+// Auto-generate "10th day of March, 2026" from YYYY-MM-DD
+function toWrittenDate(dateStr) {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const ordinals = ['','1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th',
+    '11th','12th','13th','14th','15th','16th','17th','18th','19th','20th',
+    '21st','22nd','23rd','24th','25th','26th','27th','28th','29th','30th','31st'];
+  const months = ['January','February','March','April','May','June',
+    'July','August','September','October','November','December'];
+  return ordinals[d] + ' day of ' + months[m - 1] + ', ' + y;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TEXT RUN HELPERS  — all Cambria, justified paragraphs
 // ─────────────────────────────────────────────────────────────────────────────
@@ -74,45 +86,48 @@ const ListItem = (n, text) =>
   });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SIGNATURE TABLE — two-column layout, no border, proper alignment
+// SIGNATURE TABLE
+// 4 rows × 2 cols — each row is ONE LINE so left & right are always aligned:
+//  Row 1: "Signature of Applicant(s):"   |  "Accepted by:"
+//  Row 2: "Name: <applicant>"            |  "Name: <agent>"
+//  Row 3: "Designation: <designation>"   |  "Agent Code: <code>"
+//  Row 4: "For: <business>"              |  ""
 // ─────────────────────────────────────────────────────────────────────────────
 function noBorder() {
   const none = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
   return { top: none, bottom: none, left: none, right: none, insideH: none, insideV: none };
 }
 
-function sigTable(leftLines, rightLines) {
-  // leftLines and rightLines are arrays of { text, bold }
-  const makeCell = (lines, align) =>
-    new TableCell({
-      width: { size: 4680, type: WidthType.DXA },
-      borders: noBorder(),
-      verticalAlign: VerticalAlign.TOP,
-      margins: { top: 0, bottom: 0, left: 0, right: 0 },
-      children: lines.map(l =>
-        new Paragraph({
-          alignment: align,
-          spacing: { after: 80, line: 276 },
-          children: [
-            l.bold
-              ? Rb(l.text)
-              : R(l.text)
-          ]
-        })
-      )
-    });
-
-  return new Table({
-    width: { size: 9360, type: WidthType.DXA },
+function sigCell(text, isBold) {
+  return new TableCell({
+    width: { size: 4680, type: WidthType.DXA },
     borders: noBorder(),
-    rows: [
-      new TableRow({
-        children: [
-          makeCell(leftLines,  AlignmentType.LEFT),
-          makeCell(rightLines, AlignmentType.LEFT),
-        ]
+    verticalAlign: VerticalAlign.TOP,
+    margins: { top: 0, bottom: 0, left: 0, right: 0 },
+    children: [
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        spacing: { after: 120, line: 276 },
+        children: [ isBold ? Rb(text) : R(text) ]
       })
     ]
+  });
+}
+
+// rows = array of [ [leftText, leftBold], [rightText, rightBold] ]
+function sigTable(rows) {
+  return new Table({
+    width: { size: 9360, type: WidthType.DXA },
+    columnWidths: [4680, 4680],
+    borders: noBorder(),
+    rows: rows.map(([left, right]) =>
+      new TableRow({
+        children: [
+          sigCell(left[0],  left[1]),
+          sigCell(right[0], right[1]),
+        ]
+      })
+    )
   });
 }
 
@@ -289,21 +304,13 @@ function buildPOA(d) {
           Rb(d.poaExecutionDate), Rb('.')
         ], { spaceAfter: 400 }),
 
-        // ── Signature block as a proper 2-column table ──
-        sigTable(
-          [
-            { text: 'Signature of Applicant(s):', bold: true },
-            { text: 'Name: ' + d.applicantName,  bold: false },
-            { text: 'Designation: ' + designation, bold: true },
-            { text: 'For: ' + d.businessName,    bold: false },
-          ],
-          [
-            { text: 'Accepted by:',               bold: true },
-            { text: 'Name: ' + d.agentName,       bold: false },
-            { text: 'Agent Code: ' + d.agentCode, bold: false },
-            { text: '',                            bold: false },
-          ]
-        ),
+        // ── Signature block: 4 rows × 2 cols, each row = one aligned line ──
+        sigTable([
+          [ ['Signature of Applicant(s):', true],  ['Accepted by:',               true]  ],
+          [ ['Name: ' + d.applicantName,   false], ['Name: ' + d.agentName,       false] ],
+          [ ['Designation: ' + designation, true], ['Agent Code: ' + d.agentCode, false] ],
+          [ ['For: ' + d.businessName,     false], ['',                           false] ],
+        ]),
 
         Gap(200),
 
@@ -323,7 +330,7 @@ function buildPOA(d) {
 // ROUTES
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', app: 'tmOsphere', version: '3.0.0' });
+  res.json({ status: 'ok', app: 'tmOsphere', version: '3.1.0' });
 });
 
 app.post('/api/generate', async (req, res) => {
@@ -335,12 +342,15 @@ app.post('/api/generate', async (req, res) => {
       'registeredAddress', 'residentialAddress',
       'businessClass', 'businessType', 'affidavitDate', 'place',
       'agentName', 'agentCode', 'agentAddress',
-      'poaDate', 'poaExecutionDate', 'tmOffice'
+      'poaDate', 'tmOffice'
     ];
     const missing = required.filter(f => !d[f] || !String(d[f]).trim());
     if (missing.length) {
       return res.status(400).json({ error: 'Missing required fields: ' + missing.join(', ') });
     }
+
+    // Auto-generate written execution date from poaDate e.g. "10th day of March, 2026"
+    d.poaExecutionDate = toWrittenDate(d.poaDate);
 
     const [affBuf, poaBuf] = await Promise.all([
       Packer.toBuffer(buildAffidavit(d)),
@@ -370,5 +380,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log('✅  tmOsphere v3 running → http://localhost:' + PORT);
+  console.log('✅  tmOsphere v3.1 running → http://localhost:' + PORT);
 });
