@@ -212,10 +212,28 @@ function buildAffidavit(d) {
         P([R('I state that I am familiar and well conversant with the facts and circumstances ' +
              'of the present matters and competent and authorised to swear this affidavit and ' +
              'make the necessary statements in respect thereof.')], SA_PARA),
-        P([R('A trademark application is hereby made for registration of the accompanying trademark '),
-           Rb('"'+ d.brandName +'"'), R(' in '), Rb('CLASS ' + d.businessClass),
-           R(' and the said mark has been proposed to be used for the said '),
-           Rb(d.businessType.toUpperCase()), R('.')], SA_PARA),
+        // Trademark use paragraph — dynamic based on usageType
+        ...((() => {
+          const useType = d.usageType || 'proposed'; // 'used' or 'proposed'
+          if (useType === 'used' && d.commencementDate) {
+            // Already in use — show commencement date
+            return [
+              P([R('A trademark application is hereby made for registration of the accompanying trademark '),
+                 Rb('"' + d.brandName + '"'), R(' in '), Rb('CLASS ' + d.businessClass),
+                 R(' and the said mark is already in use for the said '),
+                 Rb(d.businessType.toUpperCase()),
+                 R('. The mark has been in use since '), Rb(d.commencementDate), R('.')], SA_PARA),
+            ];
+          } else {
+            // Proposed to be used
+            return [
+              P([R('A trademark application is hereby made for registration of the accompanying trademark '),
+                 Rb('"' + d.brandName + '"'), R(' in '), Rb('CLASS ' + d.businessClass),
+                 R(' and the said mark has been proposed to be used for the said '),
+                 Rb(d.businessType.toUpperCase()), R('.')], SA_PARA),
+            ];
+          }
+        })()),
         P([R('I solemnly state that the content of this affidavit is true to the best of my ' +
              'knowledge and belief and that it conceals nothing and that no part is false.')], 160),
 
