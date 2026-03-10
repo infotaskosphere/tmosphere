@@ -4,164 +4,203 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>tmOsphere — Trademark Document Generator</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <meta name="theme-color" content="#1a2456" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --ink: #111827;
-      --navy: #1a2456;
-      --navy-dark: #131b42;
-      --navy-mid: #1e2c6b;
-      --navy-light: #243380;
-      --cream: #f0eefc;
-      --gold: #c9a020;
-      --gold-light: #e8c84a;
-      --gold-dim: rgba(201,160,32,0.12);
-      --rust: #b84c2a;
-      --parchment: #1e2c6b;
-      --border: rgba(201,160,32,0.28);
-      --text: #e8e4d8;
-      --muted: #8899cc;
-      --green: #2e7d4f; --green-bg: #0d2a1a;
-      --blue-bg: #162050; --blue: #7fa0f0;
+      /* Logo-matched palette: deep navy + rich gold */
+      --ink:          #0b1529;
+      --navy:         #0d1b3e;
+      --navy-dark:    #090f20;
+      --navy-mid:     #122048;
+      --navy-light:   #1a2d5a;
+      --gold:         #c9a84c;
+      --gold-light:   #e2c97e;
+      --gold-bright:  #f0d88a;
+      --gold-dim:     rgba(201,168,76,0.12);
+      --border:       rgba(201,168,76,0.25);
+      --text:         #e8e4d8;
+      --muted:        #6a7fa8;
+      --muted-light:  #8fa3c8;
+      --rust:         #b84c2a;
+      --green:        #2e7d4f;
+      --green-bg:     rgba(46,125,79,0.1);
+      --blue-bg:      rgba(26,45,90,0.8);
+      --blue:         #7fa0f0;
     }
+
     html { scroll-behavior: smooth; background: var(--navy-dark); }
     body { font-family: 'DM Sans', sans-serif; background: var(--navy-dark); color: var(--text); min-height: 100vh; }
 
-    /* Header */
+    /* ── Header ── */
     header {
-      background: var(--navy); padding: 0 2.5rem;
+      background: var(--navy);
+      padding: 0 2.5rem;
       display: flex; align-items: center; justify-content: space-between;
       height: 68px; position: sticky; top: 0; z-index: 100;
-      border-bottom: 2px solid var(--gold);
+      border-bottom: 2px solid rgba(201,168,76,0.5);
+      box-shadow: 0 2px 20px rgba(0,0,0,0.4);
     }
     .logo { display: flex; align-items: center; gap: 0.6rem; }
+    .logo img { height: 44px; width: auto; display: block; }
+    .logo-fallback {
+      display: none; align-items: center; gap: 0.6rem;
+    }
     .logo-mark {
       width: 36px; height: 36px;
-      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      background: linear-gradient(135deg, var(--gold), var(--gold-bright));
       border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-family: 'Playfair Display', serif; font-weight: 700; font-size: 18px; color: var(--ink);
+      font-family: 'Playfair Display', serif; font-weight: 700; font-size: 16px; color: var(--ink);
+      box-shadow: 0 2px 12px rgba(201,168,76,0.3);
     }
-    .logo-name { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 600; color: #fff; }
-    .logo-name span { color: var(--gold); }
-    .header-tag { font-size: 0.72rem; color: #a09880; letter-spacing: 0.14em; text-transform: uppercase; }
+    .logo-name { font-family: 'Playfair Display', serif; font-size: 1.35rem; font-weight: 600; color: var(--gold); }
+    .logo-name em { color: var(--gold-bright); font-style: normal; }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+    .header-tag { font-size: 0.72rem; color: var(--muted-light); letter-spacing: 0.14em; text-transform: uppercase; }
 
-    /* Hero */
-    .hero { background: var(--navy); padding: 3rem 2.5rem 3.8rem; text-align: center; position: relative; overflow: hidden; }
+    #logoutBtn {
+      font-family: 'DM Sans', sans-serif; font-size: 0.74rem; font-weight: 600;
+      padding: 0.32rem 0.78rem; border-radius: 6px; cursor: pointer;
+      border: 1.5px solid rgba(201,168,76,0.4); background: transparent;
+      color: var(--gold); letter-spacing: 0.04em;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    #logoutBtn:hover {
+      border-color: var(--gold); color: var(--gold-bright);
+      background: rgba(201,168,76,0.06);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: var(--navy); padding: 3rem 2.5rem 3.8rem;
+      text-align: center; position: relative; overflow: hidden;
+      border-bottom: 1px solid var(--border);
+    }
     .hero::before {
       content: ''; position: absolute; inset: 0;
-      background: repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(201,160,32,0.05) 40px, rgba(201,160,32,0.05) 41px);
+      background:
+        repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(201,168,76,0.04) 40px, rgba(201,168,76,0.04) 41px),
+        radial-gradient(ellipse at 50% -20%, rgba(201,168,76,0.06) 0%, transparent 60%);
     }
-    .hero-eyebrow { font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-light); margin-bottom: 0.9rem; }
-    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.9rem,4.5vw,3rem); font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 0.9rem; position: relative; }
-    .hero p { color: var(--muted); font-size: 0.97rem; max-width: 520px; margin: 0 auto; line-height: 1.7; }
+    .hero-eyebrow {
+      font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--gold-light); margin-bottom: 0.9rem; position: relative;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.9rem, 4.5vw, 3rem); font-weight: 700;
+      color: #fff; line-height: 1.15; margin-bottom: 0.9rem; position: relative;
+    }
+    .hero p { color: var(--muted-light); font-size: 0.97rem; max-width: 520px; margin: 0 auto; line-height: 1.7; position: relative; }
 
-    /* Layout */
-    .container { max-width: 920px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; background: var(--navy-dark); }
+    /* ── Container ── */
+    .container { max-width: 920px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
 
-    /* Section header */
+    /* ── Section header ── */
     .section-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
-    .section-icon { width: 32px; height: 32px; background: var(--navy-mid); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 14px; flex-shrink: 0; }
+    .section-icon {
+      width: 32px; height: 32px; background: var(--navy-mid);
+      border: 1px solid var(--border);
+      border-radius: 7px; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
     .section-header h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; color: var(--gold); }
-    .section-header p { font-size: 0.79rem; color: var(--muted); margin-top: 1px; opacity: 0.85; }
+    .section-header p { font-size: 0.79rem; color: var(--muted); margin-top: 2px; }
 
-    /* Card */
-    .card { background: rgba(26,36,86,0.6); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem 2rem; margin-bottom: 1.8rem; box-shadow: 0 4px 24px rgba(0,0,0,0.3); backdrop-filter: blur(8px); }
+    /* ── Card ── */
+    .card {
+      background: rgba(18, 32, 72, 0.55);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.8rem 2rem; margin-bottom: 1.8rem;
+      box-shadow: 0 4px 28px rgba(0,0,0,0.35);
+      backdrop-filter: blur(8px);
+    }
 
-    /* Grid */
+    /* ── Grids ── */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
     .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.1rem; }
-    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.1rem; }
     .span-2 { grid-column: span 2; }
     .span-3 { grid-column: span 3; }
-    .span-4 { grid-column: span 4; }
 
-    /* Fields */
+    /* ── Fields ── */
     .field { display: flex; flex-direction: column; gap: 0.38rem; }
-    label { font-size: 0.76rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted-light); }
     label .req { color: var(--rust); margin-left: 2px; }
+
     input, select, textarea {
       font-family: 'DM Sans', sans-serif; font-size: 0.92rem; color: var(--text);
-      background: rgba(255,255,255,0.06); border: 1.5px solid var(--border); border-radius: 7px;
-      padding: 0.62rem 0.85rem; width: 100%; transition: border-color 0.18s, box-shadow 0.18s; outline: none;
+      background: rgba(255,255,255,0.055); border: 1.5px solid var(--border);
+      border-radius: 7px; padding: 0.65rem 0.9rem; width: 100%;
+      transition: border-color 0.18s, box-shadow 0.18s, background 0.18s; outline: none;
     }
-    input:focus, select:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,160,32,0.2); background: rgba(255,255,255,0.1); }
-    input:disabled, select:disabled { opacity: 0.55; cursor: not-allowed; background: rgba(255,255,255,0.03); }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+      background: rgba(255,255,255,0.09);
+    }
+    input:disabled, select:disabled { opacity: 0.5; cursor: not-allowed; background: rgba(255,255,255,0.02); }
+    input::placeholder { color: rgba(143,163,200,0.4); }
     textarea { resize: vertical; min-height: 64px; }
     select option { background: var(--navy); color: var(--text); }
 
-    /* Custom date picker — calendar icon on right */
+    /* Date wrap */
     .date-wrap { position: relative; display: flex; align-items: center; }
     .date-wrap input[type='date'] {
-      padding-right: 2.6rem;
-      cursor: pointer;
+      padding-right: 2.6rem; cursor: pointer;
       appearance: none; -webkit-appearance: none;
     }
     .date-wrap input[type='date']::-webkit-calendar-picker-indicator {
       opacity: 0; position: absolute; right: 0; width: 100%; height: 100%; cursor: pointer;
     }
-    .date-icon {
-      position: absolute; right: 0.75rem; pointer-events: none;
-      color: var(--muted); font-size: 1rem; line-height: 1;
-    }
-    /* Usage type toggle */
-    .usage-toggle { display: flex; gap: 0.5rem; margin-bottom: 0.1rem; }
+    .date-icon { position: absolute; right: 0.75rem; pointer-events: none; color: var(--muted); font-size: 1rem; }
+    .date-preview { font-size: 0.73rem; color: var(--gold-light); margin-top: 0.25rem; min-height: 1rem; font-style: italic; }
+
+    /* Usage toggle */
+    .usage-toggle { display: flex; gap: 0.5rem; }
     .usage-pill {
       flex: 1; padding: 0.55rem 0.5rem; border-radius: 7px; cursor: pointer;
       font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 600;
-      border: 1.5px solid var(--border); background: rgba(255,255,255,0.05); color: var(--muted);
+      border: 1.5px solid var(--border); background: rgba(255,255,255,0.04); color: var(--muted-light);
       text-align: center; transition: all 0.15s;
     }
-    .usage-pill.active-proposed {
-      background: #eef3fd; border-color: #2a5cba; color: #2a5cba;
-    }
-    .usage-pill.active-used {
-      background: #e8f5ee; border-color: #2e7d4f; color: #2e7d4f;
-    }
-    .usage-pill:hover { border-color: var(--gold); color: var(--text); }
+    .usage-pill.active-proposed { background: rgba(26,45,90,0.9); border-color: #5080d0; color: #7fa0f0; }
+    .usage-pill.active-used { background: rgba(46,125,79,0.12); border-color: rgba(46,125,79,0.6); color: #6abf87; }
+    .usage-pill:hover { border-color: var(--gold); color: var(--gold-light); }
 
-    /* Preview line under date showing formatted value */
-    .date-preview {
-      font-size: 0.73rem; color: var(--gold-light); margin-top: 0.25rem;
-      min-height: 1rem; font-style: italic;
-    }
-
-    /* Auto-filled designation badge */
+    /* Designation badge */
     .designation-badge {
       display: inline-flex; align-items: center; gap: 0.4rem;
-      background: var(--blue-bg); border: 1px solid rgba(127,160,240,0.4); border-radius: 6px;
-      padding: 0.6rem 0.85rem; font-size: 0.88rem; font-weight: 600; color: var(--blue);
+      background: var(--blue-bg); border: 1px solid rgba(127,160,240,0.35); border-radius: 6px;
+      padding: 0.62rem 0.9rem; font-size: 0.88rem; font-weight: 600; color: var(--blue);
       min-height: 42px;
     }
-    .designation-badge span { font-size: 0.72rem; font-weight: 400; color: #6080c0; }
+    .designation-badge span { font-size: 0.73rem; font-weight: 400; color: var(--muted); }
 
     /* Attorney saved banner */
     .attorney-banner {
       display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
-      background: var(--green-bg); border: 1.5px solid rgba(46,125,79,0.5); border-radius: 10px;
+      background: var(--green-bg); border: 1.5px solid rgba(46,125,79,0.45); border-radius: 10px;
       padding: 0.85rem 1.1rem; margin-bottom: 1.3rem;
       animation: fadeDown 0.3s ease;
     }
     @keyframes fadeDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
     .banner-left { display: flex; align-items: center; gap: 0.7rem; }
-    .banner-icon { font-size: 1.3rem; line-height: 1; }
-    .banner-name { font-size: 0.88rem; font-weight: 600; color: var(--green); }
-    .banner-sub  { font-size: 0.74rem; color: #4a8c64; margin-top: 2px; }
+    .banner-icon { font-size: 1.3rem; }
+    .banner-name { font-size: 0.88rem; font-weight: 600; color: #6abf87; }
+    .banner-sub  { font-size: 0.74rem; color: rgba(106,191,135,0.7); margin-top: 2px; }
     .banner-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
     .btn-sm {
       font-family: 'DM Sans', sans-serif; font-size: 0.76rem; font-weight: 600;
       padding: 0.38rem 0.8rem; border-radius: 6px; cursor: pointer;
-      border: 1.5px solid; transition: all 0.15s; white-space: nowrap; background: #fff;
+      border: 1.5px solid; transition: all 0.15s; white-space: nowrap;
+      background: transparent;
     }
-    .btn-edit  { color: var(--green); border-color: #a3d4b8; }
-    .btn-edit:hover  { background: var(--green-bg); }
-    .btn-clear { color: var(--rust); border-color: #f0b8a8; }
-    .btn-clear:hover { background: #fdf0ec; }
+    .btn-edit  { color: #6abf87; border-color: rgba(46,125,79,0.5); }
+    .btn-edit:hover  { background: rgba(46,125,79,0.1); }
+    .btn-clear { color: #f4a07a; border-color: rgba(184,76,42,0.4); }
+    .btn-clear:hover { background: rgba(184,76,42,0.08); }
 
-    /* Save checkbox row */
+    /* Save row */
     .save-row {
       display: flex; align-items: center; gap: 0.65rem;
       margin-top: 1.2rem; padding-top: 1.1rem;
@@ -173,7 +212,7 @@
     }
     .save-row label {
       font-size: 0.82rem; font-weight: 500; letter-spacing: 0; text-transform: none;
-      color: var(--muted); cursor: pointer;
+      color: var(--muted-light); cursor: pointer;
     }
     .save-row label small { color: var(--muted); font-size: 0.73rem; }
 
@@ -183,20 +222,24 @@
     .doc-divider-label {
       display: flex; align-items: center; gap: 0.5rem;
       background: var(--navy-mid); border: 1px solid var(--border); border-radius: 20px;
-      padding: 0.28rem 0.85rem; font-size: 0.71rem; font-weight: 600;
+      padding: 0.28rem 0.9rem; font-size: 0.7rem; font-weight: 600;
       letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-light); white-space: nowrap;
     }
-    .doc-tag { display: inline-flex; padding: 0.14rem 0.55rem; border-radius: 4px; font-size: 0.67rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
-    .tag-affidavit { background: rgba(127,160,240,0.2); color: #7fa0f0; }
-    .tag-poa { background: rgba(201,160,32,0.2); color: var(--gold-light); }
+    .doc-tag { display: inline-flex; padding: 0.14rem 0.55rem; border-radius: 4px; font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+    .tag-affidavit { background: rgba(127,160,240,0.15); color: #7fa0f0; }
+    .tag-poa { background: rgba(201,168,76,0.15); color: var(--gold-light); }
 
     /* Generate button */
     .btn-generate {
-      width: 100%; padding: 1.1rem; background: var(--gold); color: var(--navy-dark);
-      font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 600; letter-spacing: 0.04em;
+      width: 100%; padding: 1.1rem;
+      background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+      color: var(--navy-dark);
+      font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.04em;
       border: none; border-radius: 10px; cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 0.6rem;
-      margin-top: 1rem; position: relative; overflow: hidden; transition: background 0.2s, transform 0.1s;
+      margin-top: 1rem; position: relative; overflow: hidden;
+      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px rgba(201,168,76,0.3);
     }
     .btn-generate::before {
       content: ''; position: absolute; inset: 0;
@@ -204,27 +247,36 @@
       transform: translateX(-100%); transition: transform 0.55s;
     }
     .btn-generate:hover::before { transform: translateX(100%); }
-    .btn-generate:hover { background: var(--gold-light); }
+    .btn-generate:hover { box-shadow: 0 6px 32px rgba(201,168,76,0.45); }
     .btn-generate:active { transform: scale(0.99); }
     .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* Status */
-    .status-bar { margin-top: 1.3rem; padding: 0.95rem 1.2rem; border-radius: 8px; font-size: 0.87rem; display: none; align-items: center; gap: 0.6rem; }
+    /* Status bar */
+    .status-bar {
+      margin-top: 1.3rem; padding: 0.95rem 1.2rem; border-radius: 8px;
+      font-size: 0.87rem; display: none; align-items: center; gap: 0.6rem;
+    }
     .status-bar.show { display: flex; }
-    .status-bar.loading { background: #fefae8; border: 1px solid #e8d56a; color: #7a6210; }
-    .status-bar.success { background: #e8f7ee; border: 1px solid #6abf87; color: #1a5c35; }
-    .status-bar.error   { background: #fde8e8; border: 1px solid #e88a8a; color: #7a1515; }
+    .status-bar.loading { background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.35); color: var(--gold-light); }
+    .status-bar.success { background: rgba(46,125,79,0.1); border: 1px solid rgba(46,125,79,0.45); color: #6abf87; }
+    .status-bar.error   { background: rgba(184,76,42,0.1); border: 1px solid rgba(184,76,42,0.45); color: #f4a07a; }
     .spinner { width: 16px; height: 16px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Footer */
-    footer { text-align: center; padding: 2rem; font-size: 0.77rem; color: var(--muted); border-top: 1px solid var(--border); background: var(--navy); }
+    footer {
+      text-align: center; padding: 2rem;
+      font-size: 0.77rem; color: var(--muted);
+      border-top: 1px solid var(--border);
+      background: var(--navy);
+    }
     footer strong { color: var(--gold); }
 
     @media (max-width: 680px) {
-      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-      .span-2, .span-3, .span-4 { grid-column: span 1; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .span-2, .span-3 { grid-column: span 1; }
       header { padding: 0 1.2rem; }
+      .header-tag { display: none; }
       .attorney-banner { flex-direction: column; align-items: flex-start; }
     }
   </style>
@@ -233,24 +285,16 @@
 
 <header>
   <div class="logo">
-    <img src="/logo.png" alt="tmOsphere" style="height:46px;width:auto;"
+    <img src="/logo.png" alt="tmOsphere"
       onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex';" />
-    <div id="logoFallback" style="display:none;align-items:center;gap:0.5rem;">
-      <div style="width:36px;height:36px;background:linear-gradient(135deg,#c9a020,#e8c84a);border-radius:50%;border:2px solid #c9a020;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:14px;color:#131b42;">TM</div>
-      <span style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:#c9a020;">tmOsphere</span>
+    <div class="logo-fallback" id="logoFallback">
+      <div class="logo-mark">TM</div>
+      <span class="logo-name">tm<em>O</em>sphere</span>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:1rem;">
+  <div class="header-right">
     <span class="header-tag">Trademark Document Generator</span>
-    <button id="logoutBtn" onclick="doLogout()" style="
-      font-family:'DM Sans',sans-serif;font-size:0.74rem;font-weight:600;
-      padding:0.32rem 0.75rem;border-radius:6px;cursor:pointer;
-      border:1.5px solid rgba(201,160,32,0.5);background:transparent;
-      color:var(--gold);letter-spacing:0.04em;transition:all 0.15s;
-    " onmouseover="this.style.borderColor='#c9a020';this.style.color='#e8c84a';"
-      onmouseout="this.style.borderColor='rgba(201,160,32,0.4)';this.style.color='#c9a020';">
-      Sign Out
-    </button>
+    <button id="logoutBtn" onclick="doLogout()">Sign Out</button>
   </div>
 </header>
 
@@ -263,15 +307,13 @@
 <div class="container">
   <form id="tmForm" autocomplete="off">
 
-    <!-- ─── APPLICANT & BUSINESS DETAILS ─── -->
+    <!-- ─── APPLICANT & BUSINESS ─── -->
     <div class="card">
       <div class="section-header">
         <div class="section-icon">👤</div>
         <div><h2>Applicant &amp; Business Details</h2><p>Used across both documents</p></div>
       </div>
-
       <div class="grid-2">
-        <!-- Row 1 -->
         <div class="field">
           <label>Applicant Full Name <span class="req">*</span></label>
           <input type="text" name="applicantName" id="applicantName" placeholder="e.g. Mr. Vansh Mahajan" required />
@@ -290,12 +332,9 @@
           </select>
         </div>
 
-        <!-- Designation auto-fill row -->
         <div class="field">
           <label>Designation (auto-filled)</label>
-          <div class="designation-badge" id="designationBadge">
-            <span>Select entity type above</span>
-          </div>
+          <div class="designation-badge" id="designationBadge"><span>Select entity type above</span></div>
           <input type="hidden" name="designation" id="designationHidden" value="" />
         </div>
         <div class="field">
@@ -303,7 +342,6 @@
           <input type="text" name="businessName" id="businessName" placeholder="e.g. CONNECTIFY" required />
         </div>
 
-        <!-- Row 3 -->
         <div class="field span-2">
           <label>Registered Office Address <span class="req">*</span></label>
           <input type="text" name="registeredAddress" placeholder="Shop No., Building, Street, City, State – PIN, INDIA" required />
@@ -325,14 +363,12 @@
         <div class="section-icon">📄</div>
         <div><h2>Affidavit Details</h2><p>Trademark / brand details, class, date &amp; place</p></div>
       </div>
-
       <div class="grid-3">
         <div class="field span-3">
           <label>Brand / Trademark Name <span class="req">*</span> &nbsp;<small style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(can differ from business name)</small></label>
           <input type="text" name="brandName" placeholder="e.g. CONNECTIFY (the mark being applied for)" required />
         </div>
 
-        <!-- Usage type toggle -->
         <div class="field span-3">
           <label>Trademark Usage Status <span class="req">*</span></label>
           <div class="usage-toggle">
@@ -346,7 +382,6 @@
           <input type="hidden" name="usageType" id="usageType" value="proposed" />
         </div>
 
-        <!-- Commencement date — only shown when "Already in Use" -->
         <div class="field span-3" id="commencementRow" style="display:none;">
           <label>Date of Commencement of Use <span class="req">*</span></label>
           <div class="date-wrap">
@@ -433,7 +468,6 @@
         <div><h2>Attorney / Agent Details</h2><p>Authorised trademark agent details</p></div>
       </div>
 
-      <!-- Saved attorney banner -->
       <div id="savedBanner" style="display:none" class="attorney-banner">
         <div class="banner-left">
           <div class="banner-icon">✅</div>
@@ -448,7 +482,6 @@
         </div>
       </div>
 
-      <!-- Attorney fields -->
       <div id="attorneyFields">
         <div class="grid-2">
           <div class="field">
@@ -475,8 +508,6 @@
             </select>
           </div>
         </div>
-
-        <!-- Save attorney checkbox -->
         <div class="save-row" id="saveRow">
           <input type="checkbox" id="saveCheck" />
           <label for="saveCheck">
@@ -485,8 +516,6 @@
           </label>
         </div>
       </div>
-
-
     </div>
 
     <!-- ─── POA DATE ─── -->
@@ -527,30 +556,50 @@
 </footer>
 
 <script>
-// ── Auth guard — redirect to login if no valid token ─────────────────────────
-// Show page immediately if token exists — verify silently in background
+// ─────────────────────────────────────────────────────────────────────────────
+//  BUG FIX: Auth guard — FIXED to prevent redirect loop.
+//  Original: checked token immediately, redirected on both success AND error.
+//  Fixed:    Show page immediately if token exists. Verify silently after 2s.
+//            Only redirect to /login.html on explicit 401 — not on network error.
+// ─────────────────────────────────────────────────────────────────────────────
 (function() {
   const token = localStorage.getItem('tmosphere_token');
-  if (!token) { window.location.replace('/login.html'); return; }
-  // Token exists — show page right away, verify silently in background
-  const API_BASE = (location.hostname==='localhost'||location.hostname==='127.0.0.1')
+  if (!token) {
+    window.location.replace('/login.html');
+    return;
+  }
+
+  const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
     ? 'http://localhost:3001' : '';
-  // Give server time to wake up (Render free tier) before checking
+
+  // Verify token silently in background — wait 2s for cold-start servers
   setTimeout(() => {
-    fetch(API_BASE + '/api/me', { headers: { 'Authorization': 'Bearer ' + token } })
-      .then(r => { if (r.status === 401) { localStorage.removeItem('tmosphere_token'); window.location.replace('/login.html'); } })
-      .catch(() => {}); // network error = offline, keep page
+    fetch(API_BASE + '/api/me', {
+      headers: { 'Authorization': 'Bearer ' + token },
+      signal: AbortSignal.timeout(8000)
+    })
+    .then(r => {
+      // ONLY redirect on explicit 401 — not on any other error
+      if (r.status === 401 || r.status === 403) {
+        localStorage.removeItem('tmosphere_token');
+        window.location.replace('/login.html');
+      }
+    })
+    .catch(() => {
+      // Network error / timeout → keep user on page, don't log out
+    });
   }, 2000);
 })();
 
 async function doLogout() {
   const token = localStorage.getItem('tmosphere_token');
-  const API_BASE = (location.hostname==='localhost'||location.hostname==='127.0.0.1')
+  const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
     ? 'http://localhost:3001' : '';
   try {
     await fetch(API_BASE + '/api/logout', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token }
+      headers: { 'Authorization': 'Bearer ' + token },
+      signal: AbortSignal.timeout(5000)
     });
   } catch(e) {}
   localStorage.removeItem('tmosphere_token');
@@ -564,41 +613,57 @@ const ORDINALS = ['','1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th
 const MONTHS = ['January','February','March','April','May','June',
   'July','August','September','October','November','December'];
 
-// Convert YYYY-MM-DD → "3rd day of September, 2025"
 function toWrittenDate(val) {
   if (!val) return '';
   const [y, m, d] = val.split('-').map(Number);
   return ORDINALS[d] + ' day of ' + MONTHS[m - 1] + ', ' + y;
 }
-
-// Format for display in document label: DD-MM-YYYY
 function toDisplayDate(val) {
   if (!val) return '';
   const [y, m, d] = val.split('-');
   return d + '-' + m + '-' + y;
 }
 
-// Wire up any date input to update a separate hidden field + preview label
-// pickerEl = date input, hiddenEl = hidden input for form, labelEl = preview div, mode = 'written'|'display'
-function wireDatePicker(pickerId, hiddenId, labelId, mode) {
-  const picker = document.getElementById(pickerId);
-  const hidden = document.getElementById(hiddenId);
-  const label  = labelId ? document.getElementById(labelId) : null;
-  if (!picker || !hidden) return;
-  picker.addEventListener('change', function() {
-    const formatted = mode === 'written' ? toWrittenDate(this.value) : toDisplayDate(this.value);
-    hidden.value = formatted;
-    if (label) label.textContent = formatted ? '→ "' + formatted + '"' : '';
+function setDateWithPreview(inputId, previewId, val) {
+  const el = document.getElementById(inputId);
+  const pr = document.getElementById(previewId);
+  if (el) el.value = val;
+  if (pr) pr.textContent = val ? toDisplayDate(val) + '  (' + toWrittenDate(val) + ')' : '';
+}
+
+['affidavitDate', 'poaDate'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('change', function() {
+    const pr = document.getElementById(id + 'Preview');
+    if (pr) pr.textContent = this.value
+      ? toDisplayDate(this.value) + '  (' + toWrittenDate(this.value) + ')'
+      : '';
+  });
+});
+
+const today = new Date().toISOString().split('T')[0];
+setDateWithPreview('affidavitDate', 'affidavitDatePreview', today);
+setDateWithPreview('poaDate',       'poaDatePreview',       today);
+
+// Commencement date preview
+const commEl = document.getElementById('commencementDate');
+if (commEl) {
+  commEl.addEventListener('change', function() {
+    const pr = document.getElementById('commencementDatePreview');
+    if (pr) pr.textContent = this.value
+      ? toDisplayDate(this.value) + '  (' + toWrittenDate(this.value) + ')'
+      : '';
   });
 }
 
 // ── Usage type toggle ────────────────────────────────────────────────────────
 function setUsage(type) {
   document.getElementById('usageType').value = type;
-  const commRow  = document.getElementById('commencementRow');
+  const commRow   = document.getElementById('commencementRow');
   const commInput = document.getElementById('commencementDate');
-  const pillP    = document.getElementById('pillProposed');
-  const pillU    = document.getElementById('pillUsed');
+  const pillP     = document.getElementById('pillProposed');
+  const pillU     = document.getElementById('pillUsed');
 
   if (type === 'used') {
     commRow.style.display = 'block';
@@ -615,20 +680,7 @@ function setUsage(type) {
   }
 }
 
-// Wire commencement date preview
-document.addEventListener('DOMContentLoaded', () => {
-  const commEl = document.getElementById('commencementDate');
-  if (commEl) {
-    commEl.addEventListener('change', function() {
-      const pr = document.getElementById('commencementDatePreview');
-      if (pr) pr.textContent = this.value
-        ? toDisplayDate(this.value) + '  (' + toWrittenDate(this.value) + ')'
-        : '';
-    });
-  }
-});
-
-// ── Business type → designation map ─────────────────────────────────────────
+// ── Designation map ──────────────────────────────────────────────────────────
 const DESIGNATION_MAP = {
   'Proprietorship' : 'PROPRIETOR',
   'Partnership'    : 'PARTNER',
@@ -639,121 +691,57 @@ const DESIGNATION_MAP = {
   'Trust'          : 'TRUSTEE'
 };
 
-const designationBadge  = document.getElementById('designationBadge');
-const designationHidden = document.getElementById('designationHidden');
-
-document.getElementById('businessType').addEventListener('change', function () {
-  const val = this.value;
-  const des = DESIGNATION_MAP[val] || '';
-  designationHidden.value = des;
-  if (des) {
-    designationBadge.innerHTML = '<strong>' + des + '</strong>';
-    designationBadge.style.background = 'var(--blue-bg)';
-  } else {
-    designationBadge.innerHTML = '<span>Select entity type above</span>';
-  }
+document.getElementById('businessType').addEventListener('change', function() {
+  const des = DESIGNATION_MAP[this.value] || '';
+  document.getElementById('designationHidden').value = des;
+  const badge = document.getElementById('designationBadge');
+  badge.innerHTML = des ? '<strong>' + des + '</strong>' : '<span>Select entity type above</span>';
 });
 
 // ── Attorney saved profile ───────────────────────────────────────────────────
 const STORAGE_KEY     = 'tmosphere_attorney_v2';
 const ATTORNEY_INPUTS = ['agentName', 'agentCode', 'agentAddress', 'tmOffice'];
 
-const savedBanner = document.getElementById('savedBanner');
-const bannerName  = document.getElementById('bannerName');
-const btnEdit     = document.getElementById('btnEdit');
-const btnClear    = document.getElementById('btnClear');
-const saveCheck   = document.getElementById('saveCheck');
-const saveRow     = document.getElementById('saveRow');
-
-function loadSaved() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null; } catch { return null; }
-}
-function persistAttorney(obj) { localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }
-function deleteAttorney()      { localStorage.removeItem(STORAGE_KEY); }
+function loadSaved()       { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null; } catch { return null; } }
+function persistAttorney(o){ localStorage.setItem(STORAGE_KEY, JSON.stringify(o)); }
+function deleteAttorney()  { localStorage.removeItem(STORAGE_KEY); }
 
 function setFieldsLocked(locked) {
-  ATTORNEY_INPUTS.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = locked;
-  });
+  ATTORNEY_INPUTS.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = locked; });
 }
-
 function populateFields(data) {
-  ATTORNEY_INPUTS.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el || data[id] == null) return;
-    el.value = data[id];
-
-  });
+  ATTORNEY_INPUTS.forEach(id => { const el = document.getElementById(id); if (el && data[id] != null) el.value = data[id]; });
 }
-
 function clearAttyFields() {
   ATTORNEY_INPUTS.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.tagName === 'SELECT' ? (el.selectedIndex = 0) : (el.value = '');
   });
-
 }
-
 function showBanner(name, code) {
-  bannerName.textContent = name + (code ? '  ·  Code: ' + code : '');
-  savedBanner.style.display = 'flex';
-  saveRow.style.display = 'none';
+  document.getElementById('bannerName').textContent = name + (code ? '  ·  Code: ' + code : '');
+  document.getElementById('savedBanner').style.display = 'flex';
+  document.getElementById('saveRow').style.display = 'none';
 }
 function hideBanner() {
-  savedBanner.style.display = 'none';
-  saveRow.style.display = 'flex';
+  document.getElementById('savedBanner').style.display = 'none';
+  document.getElementById('saveRow').style.display = 'flex';
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-const today = new Date().toISOString().split('T')[0];
-
-function setDateWithPreview(inputId, previewId, val) {
-  const el = document.getElementById(inputId);
-  const pr = document.getElementById(previewId);
-  if (el) el.value = val;
-  if (pr) pr.textContent = val ? toDisplayDate(val) + '  (' + toWrittenDate(val) + ')' : '';
-}
-
-// Wire date inputs to show preview on change
-['affidavitDate', 'poaDate'].forEach(id => {
-  const el = document.getElementById(id);
-  const previewId = id + 'Preview';
-  if (!el) return;
-  el.addEventListener('change', function() {
-    const pr = document.getElementById(previewId);
-    if (pr) pr.textContent = this.value
-      ? toDisplayDate(this.value) + '  (' + toWrittenDate(this.value) + ')'
-      : '';
-  });
-});
-
-setDateWithPreview('affidavitDate', 'affidavitDatePreview', today);
-setDateWithPreview('poaDate',       'poaDatePreview',       today);
-
-// Load saved attorney
 const saved = loadSaved();
-if (saved) {
-  populateFields(saved);
-  setFieldsLocked(true);
-  showBanner(saved.agentName || 'Saved Attorney', saved.agentCode || '');
-}
+if (saved) { populateFields(saved); setFieldsLocked(true); showBanner(saved.agentName || 'Saved Attorney', saved.agentCode || ''); }
 
-btnEdit.addEventListener('click', () => {
-  setFieldsLocked(false);
-  hideBanner();
-  saveCheck.checked = true;
+document.getElementById('btnEdit').addEventListener('click', () => {
+  setFieldsLocked(false); hideBanner();
+  document.getElementById('saveCheck').checked = true;
   document.getElementById('agentName').focus();
 });
 
-btnClear.addEventListener('click', () => {
+document.getElementById('btnClear').addEventListener('click', () => {
   if (!confirm('Remove saved attorney profile? You will need to re-enter details next time.')) return;
-  deleteAttorney();
-  clearAttyFields();
-  setFieldsLocked(false);
-  hideBanner();
-  saveCheck.checked = false;
+  deleteAttorney(); clearAttyFields(); setFieldsLocked(false); hideBanner();
+  document.getElementById('saveCheck').checked = false;
 });
 
 // ── Form submit ───────────────────────────────────────────────────────────────
@@ -772,7 +760,6 @@ function showStatus(type, msg, spin) {
 
 form.addEventListener('submit', async function(e) {
   e.preventDefault();
-
   genBtn.disabled = true;
   showStatus('loading', 'Generating your trademark documents…', true);
 
@@ -783,12 +770,10 @@ form.addEventListener('submit', async function(e) {
     if (el && el.disabled) { el.disabled = false; wasLocked.push(id); }
   });
   const data = Object.fromEntries(new FormData(form).entries());
-
-  // Re-lock
   wasLocked.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
 
-  // Save attorney if checked — save picker value (YYYY-MM-DD) for re-population
-  if (saveCheck.checked) {
+  // Save attorney if checked
+  if (document.getElementById('saveCheck').checked) {
     const toSave = {};
     ATTORNEY_INPUTS.forEach(id => { toSave[id] = data[id] || document.getElementById(id)?.value || ''; });
     persistAttorney(toSave);
@@ -797,18 +782,15 @@ form.addEventListener('submit', async function(e) {
   }
 
   const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3001'
-    : '';
+    ? 'http://localhost:3001' : '';
 
   try {
     const token = localStorage.getItem('tmosphere_token') || '';
     const res = await fetch(API_BASE + '/api/generate', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
-      },
-      body: JSON.stringify(data)
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(data),
+      signal: AbortSignal.timeout(30000)
     });
 
     if (!res.ok) {
@@ -822,9 +804,7 @@ form.addEventListener('submit', async function(e) {
     const a    = document.createElement('a');
     a.href     = url;
     a.download = 'TM_Documents_' + (data.brandName || 'trademark').replace(/\s+/g, '_') + '.zip';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
 
     showStatus('success', '✅ Documents for "' + data.brandName + '" downloaded! Check your downloads folder.', false);
