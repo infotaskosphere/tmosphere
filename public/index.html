@@ -78,6 +78,26 @@
     input:disabled, select:disabled { opacity: 0.58; cursor: not-allowed; background: #edeae5; }
     textarea { resize: vertical; min-height: 64px; }
 
+    /* Custom date picker — calendar icon on right */
+    .date-wrap { position: relative; display: flex; align-items: center; }
+    .date-wrap input[type='date'] {
+      padding-right: 2.6rem;
+      cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+    }
+    .date-wrap input[type='date']::-webkit-calendar-picker-indicator {
+      opacity: 0; position: absolute; right: 0; width: 100%; height: 100%; cursor: pointer;
+    }
+    .date-icon {
+      position: absolute; right: 0.75rem; pointer-events: none;
+      color: var(--muted); font-size: 1rem; line-height: 1;
+    }
+    /* Preview line under date showing formatted value */
+    .date-preview {
+      font-size: 0.73rem; color: var(--blue); margin-top: 0.25rem;
+      min-height: 1rem; font-style: italic;
+    }
+
     /* Auto-filled designation badge */
     .designation-badge {
       display: inline-flex; align-items: center; gap: 0.4rem;
@@ -322,7 +342,11 @@
         </div>
         <div class="field">
           <label>Affidavit Date <span class="req">*</span></label>
-          <input type="date" name="affidavitDate" id="affidavitDate" required />
+          <div class="date-wrap">
+            <input type="date" name="affidavitDate" id="affidavitDate" required />
+            <span class="date-icon">📅</span>
+          </div>
+          <div class="date-preview" id="affidavitDatePreview"></div>
         </div>
       </div>
     </div>
@@ -344,7 +368,7 @@
           <div class="banner-icon">✅</div>
           <div>
             <div class="banner-name" id="bannerName">Saved Attorney</div>
-            <div class="banner-sub">Pre-filled from saved profile · POA date is always editable</div>
+            <div class="banner-sub">Pre-filled from saved profile · Signing date is always editable</div>
           </div>
         </div>
         <div class="banner-actions">
@@ -369,10 +393,6 @@
             <input type="text" id="agentAddress" name="agentAddress" placeholder="Full office address of the trademark attorney" required />
           </div>
           <div class="field">
-            <label>POA Execution Date (written) <span class="req">*</span></label>
-            <input type="text" id="poaExecutionDate" name="poaExecutionDate" placeholder="e.g. 3rd day of September, 2025" required />
-          </div>
-          <div class="field">
             <label>TM Registry Office <span class="req">*</span></label>
             <select id="tmOffice" name="tmOffice" required>
               <option value="New Delhi, Ahmedabad, Mumbai, Kolkata, Chennai">All Offices</option>
@@ -395,11 +415,23 @@
         </div>
       </div>
 
-      <!-- POA signing date — always shown, always editable -->
-      <div style="margin-top:1.2rem; padding-top:1.1rem; border-top:1px solid var(--border);">
-        <div class="field" style="max-width:280px;">
+
+    </div>
+
+    <!-- ─── POA DATE ─── -->
+    <div class="card" style="margin-bottom:1.8rem;">
+      <div class="section-header">
+        <div class="section-icon">📅</div>
+        <div><h2>POA Signing Date</h2><p>Date of execution — changes with every filing</p></div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
           <label>POA Signing Date <span class="req">*</span></label>
-          <input type="date" id="poaDate" name="poaDate" required />
+          <div class="date-wrap">
+            <input type="date" id="poaDate" name="poaDate" required />
+            <span class="date-icon">📅</span>
+          </div>
+          <div class="date-preview" id="poaDatePreview"></div>
         </div>
       </div>
     </div>
@@ -424,6 +456,41 @@
 </footer>
 
 <script>
+// ── Date helpers ──────────────────────────────────────────────────────────────
+const ORDINALS = ['','1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th',
+  '11th','12th','13th','14th','15th','16th','17th','18th','19th','20th',
+  '21st','22nd','23rd','24th','25th','26th','27th','28th','29th','30th','31st'];
+const MONTHS = ['January','February','March','April','May','June',
+  'July','August','September','October','November','December'];
+
+// Convert YYYY-MM-DD → "3rd day of September, 2025"
+function toWrittenDate(val) {
+  if (!val) return '';
+  const [y, m, d] = val.split('-').map(Number);
+  return ORDINALS[d] + ' day of ' + MONTHS[m - 1] + ', ' + y;
+}
+
+// Format for display in document label: DD-MM-YYYY
+function toDisplayDate(val) {
+  if (!val) return '';
+  const [y, m, d] = val.split('-');
+  return d + '-' + m + '-' + y;
+}
+
+// Wire up any date input to update a separate hidden field + preview label
+// pickerEl = date input, hiddenEl = hidden input for form, labelEl = preview div, mode = 'written'|'display'
+function wireDatePicker(pickerId, hiddenId, labelId, mode) {
+  const picker = document.getElementById(pickerId);
+  const hidden = document.getElementById(hiddenId);
+  const label  = labelId ? document.getElementById(labelId) : null;
+  if (!picker || !hidden) return;
+  picker.addEventListener('change', function() {
+    const formatted = mode === 'written' ? toWrittenDate(this.value) : toDisplayDate(this.value);
+    hidden.value = formatted;
+    if (label) label.textContent = formatted ? '→ "' + formatted + '"' : '';
+  });
+}
+
 // ── Business type → designation map ─────────────────────────────────────────
 const DESIGNATION_MAP = {
   'Proprietorship' : 'PROPRIETOR',
@@ -452,7 +519,7 @@ document.getElementById('businessType').addEventListener('change', function () {
 
 // ── Attorney saved profile ───────────────────────────────────────────────────
 const STORAGE_KEY     = 'tmosphere_attorney_v2';
-const ATTORNEY_INPUTS = ['agentName', 'agentCode', 'agentAddress', 'poaExecutionDate', 'tmOffice'];
+const ATTORNEY_INPUTS = ['agentName', 'agentCode', 'agentAddress', 'tmOffice'];
 
 const savedBanner = document.getElementById('savedBanner');
 const bannerName  = document.getElementById('bannerName');
@@ -477,7 +544,9 @@ function setFieldsLocked(locked) {
 function populateFields(data) {
   ATTORNEY_INPUTS.forEach(id => {
     const el = document.getElementById(id);
-    if (el && data[id] != null) el.value = data[id];
+    if (!el || data[id] == null) return;
+    el.value = data[id];
+
   });
 }
 
@@ -487,6 +556,7 @@ function clearAttyFields() {
     if (!el) return;
     el.tagName === 'SELECT' ? (el.selectedIndex = 0) : (el.value = '');
   });
+
 }
 
 function showBanner(name, code) {
@@ -501,9 +571,31 @@ function hideBanner() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 const today = new Date().toISOString().split('T')[0];
-document.getElementById('affidavitDate').value = today;
-document.getElementById('poaDate').value = today;
 
+function setDateWithPreview(inputId, previewId, val) {
+  const el = document.getElementById(inputId);
+  const pr = document.getElementById(previewId);
+  if (el) el.value = val;
+  if (pr) pr.textContent = val ? toDisplayDate(val) + '  (' + toWrittenDate(val) + ')' : '';
+}
+
+// Wire date inputs to show preview on change
+['affidavitDate', 'poaDate'].forEach(id => {
+  const el = document.getElementById(id);
+  const previewId = id + 'Preview';
+  if (!el) return;
+  el.addEventListener('change', function() {
+    const pr = document.getElementById(previewId);
+    if (pr) pr.textContent = this.value
+      ? toDisplayDate(this.value) + '  (' + toWrittenDate(this.value) + ')'
+      : '';
+  });
+});
+
+setDateWithPreview('affidavitDate', 'affidavitDatePreview', today);
+setDateWithPreview('poaDate',       'poaDatePreview',       today);
+
+// Load saved attorney
 const saved = loadSaved();
 if (saved) {
   populateFields(saved);
@@ -543,6 +635,7 @@ function showStatus(type, msg, spin) {
 
 form.addEventListener('submit', async function(e) {
   e.preventDefault();
+
   genBtn.disabled = true;
   showStatus('loading', 'Generating your trademark documents…', true);
 
@@ -552,22 +645,20 @@ form.addEventListener('submit', async function(e) {
     const el = document.getElementById(id);
     if (el && el.disabled) { el.disabled = false; wasLocked.push(id); }
   });
-
   const data = Object.fromEntries(new FormData(form).entries());
 
   // Re-lock
   wasLocked.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
 
-  // Save attorney if checked
+  // Save attorney if checked — save picker value (YYYY-MM-DD) for re-population
   if (saveCheck.checked) {
     const toSave = {};
-    ATTORNEY_INPUTS.forEach(id => { toSave[id] = data[id] || ''; });
+    ATTORNEY_INPUTS.forEach(id => { toSave[id] = data[id] || document.getElementById(id)?.value || ''; });
     persistAttorney(toSave);
     setFieldsLocked(true);
     showBanner(toSave.agentName, toSave.agentCode);
   }
 
-  // Determine API base: same origin when hosted on Render, localhost for dev
   const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
     : '';
