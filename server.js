@@ -14,10 +14,12 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AUTH — simple in-memory session store
-// To add/change users: edit USERS below or set env vars on Render:
-//   ADMIN_EMAIL and ADMIN_PASSWORD
+// AUTH
+// FIX: Instead of random session tokens (wiped on restart), we now use
+// HMAC-signed tokens. The token encodes email + expiry, signed with
+// APP_SECRET. As long as APP_SECRET is set on Render, tokens survive restarts.
 // ─────────────────────────────────────────────────────────────────────────────
+
 const USERS = [
   {
     email:    (process.env.ADMIN_EMAIL    || 'admin@tmosphere.in').toLowerCase(),
@@ -26,30 +28,53 @@ const USERS = [
   }
 ];
 
-// Session tokens: Map<token, { email, name, expires }>
-const SESSIONS = new Map();
-const SESSION_TTL = 8 * 60 * 60 * 1000; // 8 hours
+// APP_SECRET must be set as env variable on Render — never changes between restarts
+const APP_SECRET = process.env.APP_SECRET
+  || process.env.JWT_SECRET
+  || 'tmOsphere_2025@Render#SecureKey$TM_India_TradeMarks_Act_1999!XyZ9q2mK';
 
-function createSession(email, name, remember) {
-  const token   = crypto.randomBytes(32).toString('hex');
-  const expires = Date.now() + (remember ? 30 * 24 * 60 * 60 * 1000 : SESSION_TTL);
-  SESSIONS.set(token, { email, name, expires });
-  return token;
+const SESSION_TTL      = 8  * 60 * 60 * 1000; // 8 hours
+const SESSION_TTL_LONG = 30 * 24 * 60 * 60 * 1000; // 30 days (remember me)
+
+// Create a signed token:  base64(payload) + '.' + hmac(base64(payload))
+function createToken(email, name, remember) {
+  const expires = Date.now() + (remember ? SESSION_TTL_LONG : SESSION_TTL);
+  const payload = Buffer.from(JSON.stringify({ email, name, expires })).toString('base64url');
+  const sig     = crypto.createHmac('sha256', APP_SECRET).update(payload).digest('base64url');
+  return payload + '.' + sig;
 }
 
-function getSession(token) {
-  if (!token) return null;
-  const sess = SESSIONS.get(token);
-  if (!sess) return null;
-  if (Date.now() > sess.expires) { SESSIONS.delete(token); return null; }
-  return sess;
+// Verify token — returns session object or null
+function verifyToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  const dot = token.lastIndexOf('.');
+  if (dot === -1) return null;
+
+  const payload = token.slice(0, dot);
+  const sig     = token.slice(dot + 1);
+  const expected = crypto.createHmac('sha256', APP_SECRET).update(payload).digest('base64url');
+
+  // Constant-time comparison to prevent timing attacks
+  if (sig.length !== expected.length) return null;
+  try {
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+  } catch {
+    return null;
+  }
+
+  let data;
+  try { data = JSON.parse(Buffer.from(payload, 'base64url').toString()); } catch { return null; }
+  if (!data || !data.email || !data.expires) return null;
+  if (Date.now() > data.expires) return null; // expired
+
+  return { email: data.email, name: data.name };
 }
 
-// Auth middleware — reads token from Authorization header or cookie
+// Auth middleware
 function requireAuth(req, res, next) {
   const header = req.headers['authorization'] || '';
   const token  = header.startsWith('Bearer ') ? header.slice(7) : null;
-  const sess   = getSession(token);
+  const sess   = verifyToken(token);
   if (!sess) return res.status(401).json({ error: 'Unauthorized. Please log in.' });
   req.user = sess;
   next();
@@ -57,14 +82,13 @@ function requireAuth(req, res, next) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
-// Title = 12pt bold (24 half-pts), Body = 11pt (22 half-pts), Single spacing
 // ─────────────────────────────────────────────────────────────────────────────
 const FONT       = 'Cambria';
-const TITLE_SIZE = 24;   // 12pt — heading / title
-const BODY_SIZE  = 22;   // 11pt — all body text
-const LINE_RULE  = 240;  // exact single line spacing (twips)
-const SA_PARA    = 80;   // spaceAfter between body paragraphs (twips ≈ 4pt)
-const SA_SMALL   = 40;   // tight spacing
+const TITLE_SIZE = 24;
+const BODY_SIZE  = 22;
+const LINE_RULE  = 240;
+const SA_PARA    = 80;
+const SA_SMALL   = 40;
 const SA_NONE    = 0;
 
 const DESIGNATION_MAP = {
@@ -77,7 +101,6 @@ const DESIGNATION_MAP = {
   'LLP'             : 'DESIGNATED PARTNER'
 };
 
-// Auto-generate "10th day of March, 2026" from YYYY-MM-DD
 function toWrittenDate(dateStr) {
   if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -92,106 +115,80 @@ function toWrittenDate(dateStr) {
 // ─────────────────────────────────────────────────────────────────────────────
 // TEXT RUN HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
-const R = (text, sz) =>
-  new TextRun({ text: String(text || ''), font: FONT, size: sz || BODY_SIZE, bold: false });
+const R  = (text, sz) => new TextRun({ text: String(text || ''), font: FONT, size: sz || BODY_SIZE, bold: false });
+const Rb = (text, sz) => new TextRun({ text: String(text || ''), font: FONT, size: sz || BODY_SIZE, bold: true });
 
-const Rb = (text, sz) =>
-  new TextRun({ text: String(text || ''), font: FONT, size: sz || BODY_SIZE, bold: true });
-
-// Body paragraph — justified, single spacing, tight spaceAfter
-const P = (runs, spaceAfter) =>
-  new Paragraph({
-    alignment: AlignmentType.JUSTIFIED,
-    spacing: { after: spaceAfter !== undefined ? spaceAfter : SA_PARA, line: LINE_RULE, lineRule: 'exact' },
-    children: Array.isArray(runs) ? runs : [runs],
-  });
-
-// Centered paragraph
-const PC = (runs, spaceAfter) =>
-  new Paragraph({
-    alignment: AlignmentType.CENTER,
-    spacing: { after: spaceAfter !== undefined ? spaceAfter : SA_NONE, line: LINE_RULE, lineRule: 'exact' },
-    children: Array.isArray(runs) ? runs : [runs],
-  });
-
-// Left paragraph
-const PL = (runs, spaceAfter) =>
-  new Paragraph({
-    alignment: AlignmentType.LEFT,
-    spacing: { after: spaceAfter !== undefined ? spaceAfter : SA_PARA, line: LINE_RULE, lineRule: 'exact' },
-    children: Array.isArray(runs) ? runs : [runs],
-  });
-
-// Numbered list item with hanging indent
-const ListItem = (n, text) =>
-  new Paragraph({
-    alignment: AlignmentType.JUSTIFIED,
-    spacing: { after: SA_SMALL, line: LINE_RULE, lineRule: 'exact' },
-    indent: { left: 360, hanging: 360 },
-    children: [R(n + '.  ' + text)],
-  });
-
-// Thin horizontal rule
-const HRule = (spaceAfter) =>
-  new Paragraph({
-    spacing: { after: spaceAfter !== undefined ? spaceAfter : SA_PARA, line: LINE_RULE, lineRule: 'exact' },
-    border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: '000000', space: 2 } },
-    children: [R('')],
-  });
+const P  = (runs, spaceAfter) => new Paragraph({
+  alignment: AlignmentType.JUSTIFIED,
+  spacing: { after: spaceAfter !== undefined ? spaceAfter : SA_PARA, line: LINE_RULE, lineRule: 'exact' },
+  children: Array.isArray(runs) ? runs : [runs],
+});
+const PC = (runs, spaceAfter) => new Paragraph({
+  alignment: AlignmentType.CENTER,
+  spacing: { after: spaceAfter !== undefined ? spaceAfter : SA_NONE, line: LINE_RULE, lineRule: 'exact' },
+  children: Array.isArray(runs) ? runs : [runs],
+});
+const PL = (runs, spaceAfter) => new Paragraph({
+  alignment: AlignmentType.LEFT,
+  spacing: { after: spaceAfter !== undefined ? spaceAfter : SA_PARA, line: LINE_RULE, lineRule: 'exact' },
+  children: Array.isArray(runs) ? runs : [runs],
+});
+const ListItem = (n, text) => new Paragraph({
+  alignment: AlignmentType.JUSTIFIED,
+  spacing: { after: SA_SMALL, line: LINE_RULE, lineRule: 'exact' },
+  indent: { left: 360, hanging: 360 },
+  children: [R(n + '.  ' + text)],
+});
+const HRule = (spaceAfter) => new Paragraph({
+  spacing: { after: spaceAfter !== undefined ? spaceAfter : SA_PARA, line: LINE_RULE, lineRule: 'exact' },
+  border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: '000000', space: 2 } },
+  children: [R('')],
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SIGNATURE TABLE — 4 rows × 2 cols, invisible borders
+// SIGNATURE TABLE
 // ─────────────────────────────────────────────────────────────────────────────
 function noBorder() {
   const none = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
   return { top: none, bottom: none, left: none, right: none, insideH: none, insideV: none };
 }
-
 function sigCell(text, isBold) {
   return new TableCell({
     width: { size: 4680, type: WidthType.DXA },
     borders: noBorder(),
     verticalAlign: VerticalAlign.TOP,
     margins: { top: 0, bottom: 0, left: 0, right: 0 },
-    children: [
-      new Paragraph({
-        alignment: AlignmentType.LEFT,
-        spacing: { after: 60, line: LINE_RULE, lineRule: 'exact' },
-        children: [ isBold ? Rb(text) : R(text) ]
-      })
-    ]
+    children: [new Paragraph({
+      alignment: AlignmentType.LEFT,
+      spacing: { after: 60, line: LINE_RULE, lineRule: 'exact' },
+      children: [isBold ? Rb(text) : R(text)]
+    })]
   });
 }
-
 function sigTable(rows) {
   return new Table({
     width: { size: 9360, type: WidthType.DXA },
     columnWidths: [4680, 4680],
     borders: noBorder(),
-    rows: rows.map(([left, right]) =>
-      new TableRow({
-        children: [
-          sigCell(left[0],  left[1]),
-          sigCell(right[0], right[1]),
-        ]
-      })
-    )
+    rows: rows.map(([left, right]) => new TableRow({
+      children: [sigCell(left[0], left[1]), sigCell(right[0], right[1])]
+    }))
   });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AFFIDAVIT  —  everything on ONE page
+// AFFIDAVIT
 // ─────────────────────────────────────────────────────────────────────────────
 function buildAffidavit(d) {
   const designation = DESIGNATION_MAP[d.businessType] || d.businessType.toUpperCase();
   const isProp      = d.businessType === 'Proprietorship';
 
   const openingRuns = isProp
-    ? [ R('I '), Rb(d.applicantName), R(', Proprietor of "'), Rb(d.businessName),
-        R('" having registered office at '), Rb(d.registeredAddress), R('.') ]
-    : [ R('I '), Rb(d.applicantName), R(', '), Rb(designation),
-        R(' of "'), Rb(d.businessName),
-        R('" having registered office at '), Rb(d.registeredAddress), R('.') ];
+    ? [R('I '), Rb(d.applicantName), R(', Proprietor of "'), Rb(d.businessName),
+       R('" having registered office at '), Rb(d.registeredAddress), R('.')]
+    : [R('I '), Rb(d.applicantName), R(', '), Rb(designation),
+       R(' of "'), Rb(d.businessName),
+       R('" having registered office at '), Rb(d.registeredAddress), R('.')];
 
   return new Document({
     styles: { default: { document: { run: { font: FONT, size: BODY_SIZE } } } },
@@ -205,38 +202,29 @@ function buildAffidavit(d) {
       children: [
         PC([Rb('AFFIDAVIT', TITLE_SIZE)], SA_NONE),
         HRule(SA_PARA),
-
         P(openingRuns, SA_PARA),
         P([R('Do hereby solely affirm as follows:')], SA_PARA),
         P([R('That I am an Indian by nationality and residing at '), Rb(d.residentialAddress), R('.')], SA_PARA),
         P([R('I state that I am familiar and well conversant with the facts and circumstances ' +
              'of the present matters and competent and authorised to swear this affidavit and ' +
              'make the necessary statements in respect thereof.')], SA_PARA),
-        // Trademark use paragraph — dynamic based on usageType
         ...((() => {
-          const useType = d.usageType || 'proposed'; // 'used' or 'proposed'
+          const useType = d.usageType || 'proposed';
           if (useType === 'used' && d.commencementDate) {
-            // Already in use — show commencement date
-            return [
-              P([R('A trademark application is hereby made for registration of the accompanying trademark '),
-                 Rb('"' + d.brandName + '"'), R(' in '), Rb('CLASS ' + d.businessClass),
-                 R(' and the said mark is already in use for the said '),
-                 Rb(d.businessType.toUpperCase()),
-                 R('. The mark has been in use since '), Rb(d.commencementDate), R('.')], SA_PARA),
-            ];
+            return [P([R('A trademark application is hereby made for registration of the accompanying trademark '),
+               Rb('"' + d.brandName + '"'), R(' in '), Rb('CLASS ' + d.businessClass),
+               R(' and the said mark is already in use for the said '),
+               Rb(d.businessType.toUpperCase()),
+               R('. The mark has been in use since '), Rb(d.commencementDate), R('.')], SA_PARA)];
           } else {
-            // Proposed to be used
-            return [
-              P([R('A trademark application is hereby made for registration of the accompanying trademark '),
-                 Rb('"' + d.brandName + '"'), R(' in '), Rb('CLASS ' + d.businessClass),
-                 R(' and the said mark has been proposed to be used for the said '),
-                 Rb(d.businessType.toUpperCase()), R('.')], SA_PARA),
-            ];
+            return [P([R('A trademark application is hereby made for registration of the accompanying trademark '),
+               Rb('"' + d.brandName + '"'), R(' in '), Rb('CLASS ' + d.businessClass),
+               R(' and the said mark has been proposed to be used for the said '),
+               Rb(d.businessType.toUpperCase()), R('.')], SA_PARA)];
           }
         })()),
         P([R('I solemnly state that the content of this affidavit is true to the best of my ' +
              'knowledge and belief and that it conceals nothing and that no part is false.')], 160),
-
         PL([Rb(d.applicantName)], SA_SMALL),
         PL([R('DATE: ' + d.affidavitDate)], SA_SMALL),
         PL([R('PLACE: ' + d.place)], SA_NONE),
@@ -246,7 +234,7 @@ function buildAffidavit(d) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POWER OF ATTORNEY  —  everything on ONE page
+// POWER OF ATTORNEY
 // ─────────────────────────────────────────────────────────────────────────────
 function buildPOA(d) {
   const designation = DESIGNATION_MAP[d.businessType] || d.businessType.toUpperCase();
@@ -254,17 +242,17 @@ function buildPOA(d) {
   const pronoun     = isProp ? 'I' : 'I/We';
 
   const openingRuns = isProp
-    ? [ R('I '), Rb(d.applicantName), R(', Proprietor of "'), Rb(d.businessName),
-        R('" having registered office at '), Rb(d.registeredAddress),
-        R(', do hereby appoint: '), Rb(d.agentName),
-        R(', having office at '), Rb(d.agentAddress),
-        R(', and having '), Rb('Trade Marks Agent Code ' + d.agentCode), R('.') ]
-    : [ R('I/We '), Rb(d.applicantName), R(', '), Rb(designation),
-        R(' of "'), Rb(d.businessName),
-        R('" having registered office at '), Rb(d.registeredAddress),
-        R(', do hereby appoint: '), Rb(d.agentName),
-        R(', having office at '), Rb(d.agentAddress),
-        R(', and having '), Rb('Trade Marks Agent Code ' + d.agentCode), R('.') ];
+    ? [R('I '), Rb(d.applicantName), R(', Proprietor of "'), Rb(d.businessName),
+       R('" having registered office at '), Rb(d.registeredAddress),
+       R(', do hereby appoint: '), Rb(d.agentName),
+       R(', having office at '), Rb(d.agentAddress),
+       R(', and having '), Rb('Trade Marks Agent Code ' + d.agentCode), R('.')]
+    : [R('I/We '), Rb(d.applicantName), R(', '), Rb(designation),
+       R(' of "'), Rb(d.businessName),
+       R('" having registered office at '), Rb(d.registeredAddress),
+       R(', do hereby appoint: '), Rb(d.agentName),
+       R(', having office at '), Rb(d.agentAddress),
+       R(', and having '), Rb('Trade Marks Agent Code ' + d.agentCode), R('.')];
 
   const items = [
     'Applying for registration of the following trademark(s) under the Trade Marks Act, 1999 and Rules made thereunder;',
@@ -285,39 +273,29 @@ function buildPOA(d) {
         }
       },
       children: [
-        // Title block
         PC([Rb('GENERAL POWER OF ATTORNEY FOR TRADEMARK/SERVICE MARK', TITLE_SIZE)], SA_NONE),
         PC([R('(UNDER SECTION 145 OF THE TRADEMARKS ACT, 1999)')], SA_NONE),
         HRule(SA_PARA),
-
-        // Opening
         P(openingRuns, SA_PARA),
-
-        // Scope heading
         P([Rb('As my/our lawful Attorney to act on my/our behalf in respect of:')], SA_SMALL),
-
-        // Numbered list — tight spacing
         ...items.map((item, i) => ListItem(i + 1, item)),
-
-        // Ratification
-        new Paragraph({ spacing: { after: 120, before: 60, line: LINE_RULE, lineRule: 'exact' }, alignment: AlignmentType.JUSTIFIED,
-          children: [ Rb(pronoun + ' hereby confirm and ratify all acts done by the above-mentioned attorney ' +
-            'in pursuance of this authority executed on this '), Rb(d.poaExecutionDate), Rb('.') ] }),
-
-        // Signature table
+        new Paragraph({
+          spacing: { after: 120, before: 60, line: LINE_RULE, lineRule: 'exact' },
+          alignment: AlignmentType.JUSTIFIED,
+          children: [Rb(pronoun + ' hereby confirm and ratify all acts done by the above-mentioned attorney ' +
+            'in pursuance of this authority executed on this '), Rb(d.poaExecutionDate), Rb('.')]
+        }),
         sigTable([
-          [ ['Signature of Applicant(s):', true],  ['Accepted by:',              true]  ],
-          [ ['Name: ' + d.applicantName,   false], ['Name: ' + d.agentName,      false] ],
-          [ ['Designation: ' + designation, true], ['Agent Code: ' + d.agentCode,false] ],
-          [ ['For: ' + d.businessName,     false], ['',                           false] ],
+          [['Signature of Applicant(s):', true],  ['Accepted by:',               true]],
+          [['Name: ' + d.applicantName,   false], ['Name: ' + d.agentName,       false]],
+          [['Designation: ' + designation, true], ['Agent Code: ' + d.agentCode, false]],
+          [['For: ' + d.businessName,     false], ['',                            false]],
         ]),
-
-        // Address block — tight
         new Paragraph({ spacing: { after: SA_SMALL, before: 80, line: LINE_RULE, lineRule: 'exact' }, children: [Rb('To,')] }),
-        PL([Rb('The Registrar of Trade Marks,')],           SA_SMALL),
+        PL([Rb('The Registrar of Trade Marks,')],             SA_SMALL),
         PL([Rb('The Office of the Trade Marks Registry at')], SA_SMALL),
         PL([Rb(d.tmOffice)],                                  SA_SMALL),
-        PL([R('Date: ' + d.poaDate)],                       SA_NONE),
+        PL([R('Date: ' + d.poaDate)],                         SA_NONE),
       ]
     }]
   });
@@ -327,31 +305,25 @@ function buildPOA(d) {
 // ROUTES
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', app: 'tmOsphere', version: '3.1.0' });
+  res.json({ status: 'ok', app: 'tmOsphere', version: '4.1.0' });
 });
 
-// ── Login ──────────────────────────────────────────────────────────────────
 app.post('/api/login', (req, res) => {
   const { email = '', password = '', remember = false } = req.body;
   const user = USERS.find(
     u => u.email === email.toLowerCase().trim() && u.password === password
   );
-  if (!user) {
-    return res.status(401).json({ error: 'Invalid email or password.' });
-  }
-  const token = createSession(user.email, user.name, remember);
+  if (!user) return res.status(401).json({ error: 'Invalid email or password.' });
+  const token = createToken(user.email, user.name, remember);
   res.json({ success: true, token, name: user.name });
 });
 
-// ── Logout ─────────────────────────────────────────────────────────────────
 app.post('/api/logout', (req, res) => {
-  const header = req.headers['authorization'] || '';
-  const token  = header.startsWith('Bearer ') ? header.slice(7) : null;
-  if (token) SESSIONS.delete(token);
+  // With signed tokens there's no server-side state to clear.
+  // Client simply discards the token.
   res.json({ success: true });
 });
 
-// ── Session check ───────────────────────────────────────────────────────────
 app.get('/api/me', requireAuth, (req, res) => {
   res.json({ email: req.user.email, name: req.user.name });
 });
@@ -372,7 +344,6 @@ app.post('/api/generate', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields: ' + missing.join(', ') });
     }
 
-    // Auto-generate written execution date from poaDate e.g. "10th day of March, 2026"
     d.poaExecutionDate = toWrittenDate(d.poaDate);
 
     const [affBuf, poaBuf] = await Promise.all([
@@ -383,7 +354,7 @@ app.post('/api/generate', requireAuth, async (req, res) => {
     const safeName = (d.brandName || 'TM').replace(/[^a-zA-Z0-9_-]/g, '_');
     const zip = new JSZip();
     zip.file('Affidavit_' + safeName + '.docx', affBuf);
-    zip.file('POA_' + safeName + '.docx', poaBuf);
+    zip.file('POA_'       + safeName + '.docx', poaBuf);
     const zipBuf = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 
     res.set({
@@ -403,5 +374,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log('✅  tmOsphere v4.0 running → http://localhost:' + PORT);
+  console.log('✅  tmOsphere v4.1 running → http://localhost:' + PORT);
 });
